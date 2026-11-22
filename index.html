@@ -7,9 +7,16 @@
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Google Fonts: Inter & Playfair Display -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet" />
+  <!-- MQTT.js over Secure WebSocket (Works on 100% Mobile SIMs & Wi-Fi) -->
+  <script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js"></script>
+  <script>
+    if (typeof mqtt === 'undefined') {
+      document.write('<script src="https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js"><\/script>');
+    }
+  </script>
 
   <script>
     tailwind.config = {
@@ -28,1370 +35,953 @@
             'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
             'float-up': 'floatUp 2.2s ease-out forwards',
             'pop-in': 'popIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards',
-            'shimmer': 'shimmer 2.5s linear infinite',
           },
           keyframes: {
             floatUp: {
               '0%': { transform: 'translateY(0) scale(0.7)', opacity: '0' },
-              '15%': { opacity: '1', transform: 'translateY(-20px) scale(1.15)' },
-              '100%': { transform: 'translateY(-260px) scale(1.35) rotate(12deg)', opacity: '0' },
+              '15%': { opacity: '1', transform: 'translateY(-15px) scale(1.15)' },
+              '100%': { transform: 'translateY(-180px) scale(0.95)', opacity: '0' },
             },
             popIn: {
-              '0%': { opacity: '0', transform: 'scale(0.94) translateY(10px)' },
+              '0%': { opacity: '0', transform: 'scale(0.95) translateY(8px)' },
               '100%': { opacity: '1', transform: 'scale(1) translateY(0)' },
-            },
-            shimmer: {
-              '0%': { backgroundPosition: '-200% 0' },
-              '100%': { backgroundPosition: '200% 0' },
             }
           }
         }
       }
-    }
+    };
   </script>
 
   <style>
     body {
       background-color: #0f0a14;
+      background-image:
+        radial-gradient(circle at 20% 15%, rgba(236, 72, 153, 0.16) 0%, transparent 45%),
+        radial-gradient(circle at 80% 85%, rgba(249, 115, 22, 0.14) 0%, transparent 45%);
       color: #f8fafc;
-      font-family: 'Inter', sans-serif;
+      min-height: 100dvh;
       overflow-x: hidden;
       -webkit-tap-highlight-color: transparent;
     }
-
-    /* Ambient Midnight Rose Glow */
-    .ambient-bg {
-      background:
-        radial-gradient(circle at 15% 10%, rgba(244, 63, 94, 0.16) 0%, transparent 45%),
-        radial-gradient(circle at 85% 85%, rgba(245, 158, 11, 0.13) 0%, transparent 45%),
-        radial-gradient(circle at 50% 50%, rgba(136, 19, 55, 0.12) 0%, #0f0a14 80%);
-    }
-
-    /* Glassmorphic Card */
     .glass-card {
-      background: rgba(26, 17, 36, 0.78);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-      border: 1px solid rgba(244, 63, 94, 0.22);
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      background: rgba(26, 17, 36, 0.88);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55);
     }
-
-    .glass-subtle {
+    .btn-gradient {
+      background: linear-gradient(135deg, #ec4899 0%, #f43f5e 50%, #f97316 100%);
+      transition: all 0.2s ease;
+    }
+    .btn-gradient:active {
+      transform: scale(0.98);
+    }
+    .option-card {
       background: rgba(255, 255, 255, 0.04);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
       border: 1px solid rgba(255, 255, 255, 0.09);
+      transition: all 0.2s ease;
     }
-
-    /* Primary Gradient Button */
-    .btn-rose-gold {
-      background: linear-gradient(135deg, #f43f5e 0%, #e11d48 50%, #f59e0b 100%);
-      box-shadow: 0 8px 25px -4px rgba(244, 63, 94, 0.45);
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    .option-card:hover {
+      background: rgba(236, 72, 153, 0.1);
+      border-color: rgba(236, 72, 153, 0.35);
     }
-    .btn-rose-gold:active {
-      transform: scale(0.97);
-    }
-
-    /* Custom Scrollbar */
-    ::-webkit-scrollbar {
-      width: 5px;
-    }
-    ::-webkit-scrollbar-track {
-      background: #0f0a14;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: rgba(244, 63, 94, 0.35);
-      border-radius: 9999px;
+    .option-selected {
+      background: linear-gradient(135deg, rgba(236, 72, 153, 0.24), rgba(249, 115, 22, 0.2)) !important;
+      border-color: #ec4899 !important;
+      box-shadow: 0 0 20px rgba(236, 72, 153, 0.25);
     }
   </style>
 </head>
-<body class="ambient-bg min-h-screen flex flex-col justify-between selection:bg-rose-500 selection:text-white">
+<body class="font-sans antialiased flex flex-col items-center justify-center px-4 py-6 relative">
 
-  <!-- Floating Reaction Layer -->
-  <div id="reaction-layer" class="pointer-events-none fixed inset-0 z-50 overflow-hidden"></div>
+  <!-- Toast Container -->
+  <div id="toast-container" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 w-full max-w-sm px-4 pointer-events-none"></div>
 
-  <!-- Custom Toast Notification -->
-  <div id="toast-container" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-sm pointer-events-none flex flex-col gap-2"></div>
+  <!-- Floating Reaction Container -->
+  <div id="reaction-layer" class="fixed inset-0 pointer-events-none z-40 overflow-hidden"></div>
 
-  <!-- Level Up Celebration Overlay -->
-  <div id="level-up-modal" class="hidden fixed inset-0 z-40 flex items-center justify-center p-5 bg-black/80 backdrop-blur-md">
-    <div class="glass-card rounded-3xl p-7 max-w-sm w-full text-center border-amber-400/40 animate-pop-in relative overflow-hidden">
-      <div class="absolute inset-0 bg-gradient-to-br from-rose-500/15 via-transparent to-amber-500/15 pointer-events-none"></div>
-      <div id="level-up-icon" class="text-5xl mb-3">🔥</div>
-      <span class="inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest bg-amber-500/20 text-amber-300 border border-amber-400/30 mb-2">
-        Level Unlocked!
-      </span>
-      <h2 id="level-up-title" class="font-serif text-2xl font-bold text-white mb-2">Level 2: Flirty & Teasing</h2>
-      <p id="level-up-subtitle" class="text-sm text-rose-200/80 mb-6">Ebar halka teasing shuru hok... ready toh? 😉</p>
-      <button onclick="dismissLevelUp()" class="w-full py-3.5 rounded-2xl btn-rose-gold font-semibold text-white text-sm tracking-wide">
-        Continue Playing ✨
-      </button>
-    </div>
-  </div>
+  <!-- Main Container -->
+  <main class="w-full max-w-md mx-auto relative z-10">
 
-  <!-- Main App Container -->
-  <main id="app-root" class="w-full max-w-md mx-auto flex-1 flex flex-col px-4 py-4 sm:py-6 relative z-10">
-    <!-- Dynamic Views Rendered via JS -->
+    <!-- ==================== VIEW 1: LOBBY ==================== -->
+    <section id="view-lobby" class="animate-pop-in">
+      <!-- Server Status Pill -->
+      <div class="flex justify-center mb-4">
+        <div id="server-pill" class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/5 border border-white/10 text-xs text-slate-300">
+          <span id="server-dot" class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+          <span id="server-text">Live server connect hocche...</span>
+        </div>
+      </div>
+
+      <!-- Header -->
+      <div class="text-center mb-6">
+        <div class="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-pink-500/15 border border-pink-500/30 text-pink-200 text-xs font-medium mb-3">
+          <span>🔥</span>
+          <span>40 Intimate Questions • 8 Spice Levels</span>
+        </div>
+        <h1 class="font-serif text-4xl font-bold tracking-tight bg-gradient-to-r from-pink-200 via-rose-200 to-amber-200 bg-clip-text text-transparent">
+          Sparks &amp; Secrets
+        </h1>
+        <p class="text-slate-400 text-sm mt-1.5">Couple's Live Real-Time Intimate Quiz</p>
+      </div>
+
+      <!-- Main Card -->
+      <div class="glass-card rounded-3xl p-5 sm:p-6">
+        <!-- Mode Tabs -->
+        <div class="grid grid-cols-3 gap-1 p-1 rounded-2xl bg-black/40 border border-white/5 mb-5">
+          <button onclick="switchTab('create')" id="tab-create" class="py-2.5 text-xs sm:text-sm font-semibold rounded-xl transition-all bg-pink-600 text-white shadow-lg">
+            Create Room
+          </button>
+          <button onclick="switchTab('join')" id="tab-join" class="py-2.5 text-xs sm:text-sm font-semibold rounded-xl transition-all text-slate-400 hover:text-white">
+            Join Room
+          </button>
+          <button onclick="switchTab('pass')" id="tab-pass" class="py-2.5 text-xs sm:text-sm font-semibold rounded-xl transition-all text-slate-400 hover:text-white">
+            Pass &amp; Play
+          </button>
+        </div>
+
+        <!-- CREATE ROOM PANEL -->
+        <div id="panel-create" class="space-y-4">
+          <div>
+            <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Tomar Nickname</label>
+            <input id="create-name" type="text" maxlength="18" placeholder="e.g. Navid"
+              class="w-full px-4 py-3.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-pink-500 transition" />
+          </div>
+
+          <div class="p-3.5 rounded-xl bg-pink-500/10 border border-pink-500/20 text-xs text-pink-200/90 leading-relaxed">
+            🔗 <span class="font-semibold">2 Phones Real-Time:</span> Room create kore invite link-ta girlfriend-ke pathao. Duijon nijer phone-e option click korle live reveal hobe!
+          </div>
+
+          <button id="btn-create-room" onclick="createLiveRoom()" class="w-full py-3.5 rounded-xl btn-gradient font-semibold text-white text-base shadow-lg shadow-pink-600/25 flex items-center justify-center gap-2">
+            <span>Create Live Room</span>
+            <span>✨</span>
+          </button>
+        </div>
+
+        <!-- JOIN ROOM PANEL -->
+        <div id="panel-join" class="space-y-4 hidden">
+          <div>
+            <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Tomar Nickname</label>
+            <input id="join-name" type="text" maxlength="18" placeholder="e.g. Jan / Baby"
+              class="w-full px-4 py-3.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-pink-500 transition" />
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">4-Digit Room Code</label>
+            <input id="join-code" type="text" maxlength="6" placeholder="e.g. 4829" inputmode="numeric"
+              class="w-full px-4 py-3.5 rounded-xl bg-white/5 border border-white/10 text-white text-center text-xl font-bold tracking-[0.35em] placeholder-slate-500 focus:outline-none focus:border-pink-500 transition uppercase" />
+          </div>
+
+          <button id="btn-join-room" onclick="joinLiveRoom()" class="w-full py-3.5 rounded-xl btn-gradient font-semibold text-white text-base shadow-lg shadow-pink-600/25 flex items-center justify-center gap-2">
+            <span>Join Live Room</span>
+            <span>💖</span>
+          </button>
+        </div>
+
+        <!-- PASS & PLAY PANEL -->
+        <div id="panel-pass" class="space-y-4 hidden">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Player 1</label>
+              <input id="pass-p1" type="text" maxlength="16" placeholder="Tomar naam"
+                class="w-full px-3.5 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-pink-500 text-sm" />
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Player 2</label>
+              <input id="pass-p2" type="text" maxlength="16" placeholder="Partner-er naam"
+                class="w-full px-3.5 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-pink-500 text-sm" />
+            </div>
+          </div>
+
+          <div class="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-200/90 leading-relaxed">
+            📱 <span class="font-semibold">Same Phone Mode:</span> Prothome ekjon answer select korbe (choice hide thakbe), tarpor phone partner-ke dile duijoner answer ekshathe reveal hobe!
+          </div>
+
+          <button onclick="startPassAndPlay()" class="w-full py-3.5 rounded-xl btn-gradient font-semibold text-white text-base shadow-lg shadow-pink-600/25 flex items-center justify-center gap-2">
+            <span>Start Pass &amp; Play</span>
+            <span>🔥</span>
+          </button>
+        </div>
+      </div>
+
+      <p class="text-center text-xs text-slate-500 mt-5">
+        Level 1 (Sweet) theke shuru kore Level 8 (Unfiltered) porjonto 🌶️
+      </p>
+    </section>
+
+    <!-- ==================== VIEW 2: WAITING ROOM ==================== -->
+    <section id="view-waiting" class="hidden animate-pop-in">
+      <div class="glass-card rounded-3xl p-6 text-center space-y-5">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-medium">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+          <span>Live Room Ready</span>
+        </div>
+
+        <div>
+          <p class="text-xs uppercase tracking-widest text-slate-400 mb-1">Tomar Room Code</p>
+          <div id="display-room-code" class="text-4xl font-extrabold tracking-[0.28em] text-white bg-black/40 border border-white/10 rounded-2xl py-4 select-all">
+            0000
+          </div>
+        </div>
+
+        <div class="space-y-2.5 text-left bg-white/5 rounded-2xl p-4 border border-white/10">
+          <p class="text-xs text-slate-300 font-medium">Girlfriend-ke invite link pathao (tap korlei auto-code boshe jabe):</p>
+          <div class="flex gap-2">
+            <input id="invite-link-box" type="text" readonly class="flex-1 px-3 py-2.5 rounded-xl bg-black/50 border border-white/10 text-xs text-pink-300 focus:outline-none" />
+            <button onclick="copyInviteLink()" class="px-4 py-2.5 rounded-xl bg-pink-600 hover:bg-pink-500 text-white text-xs font-semibold shrink-0 transition">
+              Copy
+            </button>
+          </div>
+          <button onclick="shareWhatsApp()" class="w-full py-2.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/30 text-emerald-300 text-xs font-semibold flex items-center justify-center gap-2 transition">
+            <span>💬 Direct WhatsApp-e Pathao</span>
+          </button>
+        </div>
+
+        <div class="py-2">
+          <div class="flex items-center justify-center gap-3">
+            <span class="px-3 py-1.5 rounded-xl bg-pink-500/20 border border-pink-500/30 text-pink-200 text-xs font-semibold" id="wait-host-name">Host</span>
+            <span class="text-slate-500 text-xs">💞</span>
+            <span class="px-3 py-1.5 rounded-xl bg-white/5 border border-dashed border-white/20 text-slate-400 text-xs animate-pulse" id="wait-guest-name">Partner-er jonno opekkha...</span>
+          </div>
+        </div>
+
+        <button onclick="leaveRoom()" class="text-xs text-slate-400 hover:text-white underline">
+          Cancel &amp; Back
+        </button>
+      </div>
+    </section>
+
+    <!-- ==================== VIEW 3: GAME ARENA ==================== -->
+    <section id="view-game" class="hidden animate-pop-in space-y-4">
+      <!-- Top Bar -->
+      <div class="glass-card rounded-2xl px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span id="game-level-badge" class="px-2.5 py-1 rounded-lg bg-pink-500/20 border border-pink-500/30 text-pink-200 text-xs font-bold">
+            Level 1 🌸
+          </span>
+          <span id="game-q-counter" class="text-xs text-slate-400 font-medium">Q 1 / 40</span>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button onclick="toggleLevelDrawer()" class="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-[11px] text-slate-300">
+            Jump Level ▾
+          </button>
+          <div class="px-2.5 py-1 rounded-lg bg-amber-500/15 border border-amber-500/25 text-amber-200 text-xs font-semibold">
+            💞 <span id="match-count">0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Level Jump Drawer -->
+      <div id="level-drawer" class="hidden glass-card rounded-2xl p-3 grid grid-cols-4 gap-1.5"></div>
+
+      <!-- Players Live Status Bar -->
+      <div class="grid grid-cols-2 gap-2.5">
+        <div class="glass-card rounded-2xl p-3 flex items-center justify-between">
+          <div class="truncate">
+            <p class="text-[10px] uppercase tracking-wider text-slate-400">You</p>
+            <p id="p1-label" class="text-sm font-semibold text-white truncate">Player 1</p>
+          </div>
+          <span id="p1-status" class="text-xs px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300">Thinking...</span>
+        </div>
+
+        <div class="glass-card rounded-2xl p-3 flex items-center justify-between">
+          <div class="truncate">
+            <p class="text-[10px] uppercase tracking-wider text-slate-400">Partner</p>
+            <p id="p2-label" class="text-sm font-semibold text-white truncate">Player 2</p>
+          </div>
+          <span id="p2-status" class="text-xs px-2 py-0.5 rounded-full bg-white/10 text-slate-400">Waiting...</span>
+        </div>
+      </div>
+
+      <!-- Question Card -->
+      <div class="glass-card rounded-3xl p-5 sm:p-6 space-y-5">
+        <div>
+          <p id="level-subtitle" class="text-xs font-semibold uppercase tracking-wider text-pink-400 mb-1.5">Level 1 • Sweet &amp; First Sparks</p>
+          <h2 id="question-text" class="font-serif text-xl sm:text-2xl font-bold text-white leading-snug">
+            Loading question...
+          </h2>
+        </div>
+
+        <!-- Pass & Play Turn Banner -->
+        <div id="pass-turn-banner" class="hidden p-3 rounded-xl bg-pink-500/15 border border-pink-500/30 text-center text-xs text-pink-200 font-medium">
+          Phone-ta ekhon <span id="pass-active-player" class="font-bold underline">Player 1</span>-er hate! Nijeke select kore dao.
+        </div>
+
+        <!-- Options List -->
+        <div id="options-list" class="space-y-2.5"></div>
+
+        <!-- Reveal Comparison Box -->
+        <div id="reveal-box" class="hidden pt-2 border-t border-white/10 space-y-3 animate-pop-in">
+          <div id="match-banner" class="p-3 rounded-2xl text-center text-sm font-semibold"></div>
+
+          <div class="grid grid-cols-1 gap-2 text-xs">
+            <div class="p-3 rounded-xl bg-pink-500/10 border border-pink-500/25">
+              <span class="text-pink-300 font-bold" id="rev-p1-name">You:</span>
+              <span class="text-white ml-1" id="rev-p1-ans">-</span>
+            </div>
+            <div class="p-3 rounded-xl bg-orange-500/10 border border-orange-500/25">
+              <span class="text-orange-300 font-bold" id="rev-p2-name">Partner:</span>
+              <span class="text-white ml-1" id="rev-p2-ans">-</span>
+            </div>
+          </div>
+
+          <button id="btn-next-q" onclick="nextQuestion()" class="w-full py-3.5 rounded-xl btn-gradient font-semibold text-white text-sm shadow-lg">
+            Next Question →
+          </button>
+        </div>
+      </div>
+
+      <!-- Live Emoji Reaction Bar (Only in Live Mode) -->
+      <div id="reaction-bar" class="glass-card rounded-2xl p-2.5 flex items-center justify-around">
+        <button onclick="sendReaction('❤️')" class="text-xl hover:scale-125 active:scale-95 transition p-1">❤️</button>
+        <button onclick="sendReaction('🔥')" class="text-xl hover:scale-125 active:scale-95 transition p-1">🔥</button>
+        <button onclick="sendReaction('😘')" class="text-xl hover:scale-125 active:scale-95 transition p-1">😘</button>
+        <button onclick="sendReaction('🙈')" class="text-xl hover:scale-125 active:scale-95 transition p-1">🙈</button>
+        <button onclick="sendReaction('😂')" class="text-xl hover:scale-125 active:scale-95 transition p-1">😂</button>
+        <button onclick="sendReaction('🌶️')" class="text-xl hover:scale-125 active:scale-95 transition p-1">🌶️</button>
+      </div>
+    </section>
+
+    <!-- ==================== VIEW 4: SUMMARY ==================== -->
+    <section id="view-summary" class="hidden animate-pop-in">
+      <div class="glass-card rounded-3xl p-6 text-center space-y-5">
+        <div class="text-4xl">🥂✨</div>
+        <h2 class="font-serif text-3xl font-bold text-white">All 40 Secrets Unlocked!</h2>
+        <p class="text-sm text-slate-300">
+          Tomader Chemistry Match: <span id="final-score" class="text-pink-400 font-bold text-lg">0 / 40</span>
+        </p>
+        <div id="final-vibe" class="p-4 rounded-2xl bg-pink-500/10 border border-pink-500/25 text-xs text-pink-200 leading-relaxed">
+          Unstoppable couple energy!
+        </div>
+        <button onclick="restartQuiz()" class="w-full py-3.5 rounded-xl btn-gradient font-semibold text-white text-sm shadow-lg">
+          Play Again From Level 1 🔄
+        </button>
+      </div>
+    </section>
+
   </main>
 
-  <!-- Firebase & Application Logic -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-    // ==========================================
-    // 1. COMPLETE 40 QUESTIONS & 8 LEVELS DATASET
-    // ==========================================
+  <script>
+    // ==================== 40 QUESTIONS ACROSS 8 SPICE LEVELS ====================
     const LEVELS = [
-      { level: 1, title: "Sweet & Romantic (Warm-Up)", badge: "💕 Level 1 • Sweet", icon: "💕", hype: "Shuru hok sweet kichu romantic kotha diye..." },
-      { level: 2, title: "Flirty & Teasing", badge: "😉 Level 2 • Flirty", icon: "😉", hype: "Ebar halka teasing ar dushtumi shuru!" },
-      { level: 3, title: "Getting Closer (Romance + Tension)", badge: "💓 Level 3 • Closer", icon: "💓", hype: "Durotto komche, chemistry aro deep hocche..." },
-      { level: 4, title: "Turning Up the Heat", badge: "🌡️ Level 4 • Heating Up", icon: "🌡️", hype: "Temperature barche! Heartbeat fast hocche toh?" },
-      { level: 5, title: "Bold Confessions", badge: "💋 Level 5 • Bold", icon: "💋", hype: "Kono lajja noy—ajke sob secret confession hobe!" },
-      { level: 6, title: "Spicy & Passionate", badge: "🌶️ Level 6 • Spicy", icon: "🌶️", hype: "Ebar ashol spicy round! Ready thako 🔥" },
-      { level: 7, title: "Wild & Adventurous", badge: "😈 Level 7 • Wild", icon: "😈", hype: "Rules ektu bhangar somoy eshe geche..." },
-      { level: 8, title: "Unfiltered & Intense", badge: "🔥 Level 8 • Intense", icon: "🔥", hype: "Final Level! Pure unfiltered desire & passion ❤️‍🔥" }
+      { id: 1, name: "Level 1 🌸", title: "Sweet & First Sparks", spice: "🌸" },
+      { id: 2, name: "Level 2 💞", title: "Heart-to-Heart Deep", spice: "💞" },
+      { id: 3, name: "Level 3 😉", title: "Playful & Flirty", spice: "😉" },
+      { id: 4, name: "Level 4 ✨", title: "Chemistry & Tension", spice: "✨" },
+      { id: 5, name: "Level 5 🌙", title: "Late-Night Confessions", spice: "🌙" },
+      { id: 6, name: "Level 6 🔥", title: "Heat Rising", spice: "🔥" },
+      { id: 7, name: "Level 7 💋", title: "Deep Desire", spice: "💋" },
+      { id: 8, name: "Level 8 🌶️", title: "Unfiltered & No Secrets", spice: "🌶️" }
     ];
 
     const QUESTIONS = [
-      // Level 1: Sweet & Romantic (Warm-Up)
-      { id: 1, level: 1, q: "Amar kon jinish ta tomar sobcheye beshi cute lage?", options: { A: "Amar hasi ar chokher takano", B: "Jokhon ami halka jealous ba possessive hoi", C: "Amar care neyar dhoron ta" } },
-      { id: 2, level: 1, q: "Amader perfect cozy date konta hobe?", options: { A: "Brishtir dine ek sathe coffee ar long drive", B: "Room-er light off kore movie ar cuddling", C: "Chhad-e boshe raat bhor golpo kora" } },
-      { id: 3, level: 1, q: "Amar kon kotha ta shunle tomar mon kharap thakleo bhalo hoye jay?", options: { A: "\"Ami achi toh tomar sathe\"", B: "Jokhon ami tomar tareef/compliment kori", C: "Jokhon ami dushtu kore tomake tease kori" } },
-      { id: 4, level: 1, q: "Prothom bar amake dekhe tomar mathay ki eshechilo?", options: { A: "\"Wow, looks really attractive!\"", B: "\"Ektu mysterious, kintu kotha bolte icche korche\"", C: "\"Future-e kichu ekta hote pare amader moddhe\"" } },
-      { id: 5, level: 1, q: "Tomar favorite non-sexual physical touch konta?", options: { A: "Pichon theke hothat joriye dhora (back hug)", B: "Haat dhore rakha ar angul diye khela", C: "Kopale ba gaale soft kiss" } },
+      // LEVEL 1: Sweet & First Sparks (1-5)
+      { level: 1, q: "Prothom dekhar por tomar mathay amar somporke kon chinta-ta eshechilo?", opts: ["Ektu mysterious kintu khub attractive", "Khub cute ar innocent", "Ei manush-tar sathe kotha boltei hobe", "Prothome bujhini eto close hoye jabo"] },
+      { level: 1, q: "Amader kon choto muhurto-ta tomar ekhono mone porle hashi pay?", opts: ["Prothom bar chokhe chokh porar muhurto", "Konovabe awkward hoye jawar ekta moment", "Late night-e non-stop kotha bolar raat", "Prothom bar hat dhora ba kache asha"] },
+      { level: 1, q: "Amar kon choto habit-ta tomar sobcheye beshi bhalo lage?", opts: ["Amar hashi ar kotha bolar style", "Choto choto bishoye care neya", "Ektu rag korle ba obhiman korle", "Jokhon ami mon diye tomar kotha shuni"] },
+      { level: 1, q: "Ekta perfect cozy date bolte tumi konta bujho?", opts: ["Brishtir dine cha/coffee ar long drive", "Ekshathe ranna kore movie dekha", "Raat-er shanto rasta dhore hata", "Nijer room-e gaan shune golpo kora"] },
+      { level: 1, q: "Amar phone-e tomar naam ki diye save kora thaka uchit bole tumi mone koro?", opts: ["Cute kono nickname diye", "Heart emoji sathe real naam", "Ekdom secret kono code naam", "Shobcheye special ekta title diye"] },
 
-      // Level 2: Flirty & Teasing
-      { id: 6, level: 2, q: "Public place-e thakle ami tomake kivabe tease korle tomar bhalo lage?", options: { A: "Chupchap chokher isharay kichu bujhale", B: "Table-er niche haat ba paa touch korle", C: "Kaner kache eshe aste kore kichu bolle" } },
-      { id: 7, level: 2, q: "Amar kon dress ba look ta tomake sobcheye beshi attract kore?", options: { A: "Formal ba sharp fitted outfit", B: "Casual oversized t-shirt / cozy look", C: "Traditional dress (Panjabi / Saree vibe)" } },
-      { id: 8, level: 2, q: "Texting korar somoy kon dhoroner message pele tomar mood instantly change hoye jay?", options: { A: "Hothat kora ekta flirty ba double-meaning text", B: "\"Ekhon amar kache thakle ki kortam jano?\" type text", C: "Ekta random cute ba hot selfie" } },
-      { id: 9, level: 2, q: "Jodi amra ekta crowded lift-e 2 minute eka atke jai, tumi ki korbe?", options: { A: "Just chokhe chokh rekhe smile korbo", B: "Kache tene niye ekta quick secret kiss dibo", C: "Tomake tease korbo jate tumi blush koro" } },
-      { id: 10, level: 2, q: "Amar body-r kon part ta tomar sobcheye beshi attractive lage?", options: { A: "Chokh ar thot (eyes & lips)", B: "Haat, shoulders ar jawline", C: "Amar scent ar voice" } },
+      // LEVEL 2: Heart-to-Heart Deep (6-10)
+      { level: 2, q: "Mon kharap thakle tumi amar kach theke ki asha koro?", opts: ["Kono kotha na bole shudhu joriye dhora", "Amar kotha chupchap shona", "Hasi-thattay mon bhalo kore deya", "Shob problem-er solution ber kora"] },
+      { level: 2, q: "Tomar Love Language konta sobcheye strong?", opts: ["Physical touch & closeness", "Quality time (shudhu duijon)", "Sweet words & appreciation", "Choto choto surprise & care"] },
+      { level: 2, q: "Amader moddhe kon jinish-ta tomay sobcheye beshi safe feel koray?", opts: ["Ami kono kichu judge kori na", "Jekono somoy pashe pawa jay", "Amar chokher bhitore biswas-ta", "Kotha na bolleo mon bujhe fela"] },
+      { level: 2, q: "Bhobishyote amader ekshathe kon swapno-ta tumi age puron korte chao?", opts: ["Ekshathe desher baire kothao ghure asha", "Nijer ekta choto sundor basha sajano", "Sara raat chade ba balu-te boshe thaka", "Shob tension bhule ekta long vacation"] },
+      { level: 2, q: "Jodi amader moddhe jhogra hoy, ke age sorry bolbe bole mone hoy?", opts: ["Ami nijei age norom hoye jai", "Tumi ektu pore thik-i maniye nao", "Duijon-i chup thaki, tarpor heshe feli", "Jekono ekjon joriye dhorlei shob shesh"] },
 
-      // Level 3: Getting Closer (Romance + Tension)
-      { id: 11, level: 3, q: "Kiss korar khetre tomar kon style ta sobcheye beshi pochondo?", options: { A: "Slow, soft ar romantic", B: "Deep, passionate ar ekdom breathless", C: "Teasing—age halka bite ba pause, tarpor deep kiss" } },
-      { id: 12, level: 3, q: "Neck-e kiss ba breath feel korle tomar kemon reaction hoy?", options: { A: "Instantly goosebumps chole ashe", B: "Control harate shuru kori", C: "Aro kache tante icche kore" } },
-      { id: 13, level: 3, q: "Raat-e kotha bolte bolte jokhon voice ta heavy/sleepy hoye jay, tokhon ki mone hoy?", options: { A: "Phone rekhe ekhon-i kache chole ashi", B: "Aro deep ar personal kotha bolte icche kore", C: "Just tomar awaj shune ghumiye porte icche kore" } },
-      { id: 14, level: 3, q: "Amader moddhe physical closeness barbe emon best setting konta?", options: { A: "Dim lights, soft music ar scented candles", B: "Late night long drive-e secluded kono jayga", C: "Ekta weekend staycation / hotel room" } },
-      { id: 15, level: 3, q: "Ami jokhon tomar khub kache eshe chokher dike takiye chup thaki, tokhon ki mone hoy?", options: { A: "Ekhon-i kiss kore feli", B: "Ektu shy feel kori kintu bhalo lage", C: "Dekhi ke age move kore!" } },
+      // LEVEL 3: Playful & Flirty (11-15)
+      { level: 3, q: "Onno keu amar dike beshi takale ba flirt korle tomar reaction ki hoy?", opts: ["Bhitore bhitore ektu jealous hoi", "Direct hand dhore nijer kache tani", "Baire cool thaki kintu pore jiggesh kori", "Hashi pay karon ami jani tumi amar"] },
+      { level: 3, q: "Amar kon look-ta dekhle tomar chokh sorate koshto hoy?", opts: ["Traditional outfit (Saree / Panjabi)", "Casual oversized t-shirt / messy hair", "Black color-er jekono dress", "Ghum theke othar por natural look"] },
+      { level: 3, q: "Kono public place-e thakle tumi ki korte beshi pochondo koro?", opts: ["Chupchap hat-er angul dhore rakha", "Kache eshe kane kane kichu bola", "Chokher isharay secret kotha bola", "Ektu tease kore lajja deya"] },
+      { level: 3, q: "Amake tease korar jonno tomar favorite weapon konta?", opts: ["Purono kono embarrassing kotha mone koriye deya", "Hothat kore serious bhab dhore thaka", "Sweet kore chokh mere hasha", "Reply dite ektu deri kore jalano"] },
+      { level: 3, q: "Late night call-e amar voice shune tomar ki feel hoy?", opts: ["Mon-ta ekdom shanto hoye jay", "Kache ashar icche bere jay", "Ghum chole giye aro kotha bolte icche kore", "Heart-beat ektu bere jay"] },
 
-      // Level 4: Turning Up the Heat
-      { id: 16, level: 4, q: "Tomake turn on korar sobcheye fast way konta?", options: { A: "Kaner kache low voice-e kichu bola", B: "Waist dhore kache tene neya", C: "Chokhe chokh rekhe slow touch kora" } },
-      { id: 17, level: 4, q: "Makeout session-e tumi ki beshi enjoy koro?", options: { A: "Beshi somoy niye slow buildup", B: "Hothat kore intense ar wild hoye jawa", C: "Kotha ar teasing-er sathe mix kora" } },
-      { id: 18, level: 4, q: "Amar kon habit ta tomake secretly turn on kore?", options: { A: "Jokhon ami lip bite kori ba chul thik kori", B: "Jokhon ami ektu dominant tone-e kotha boli", C: "Jokhon ami tomake deeply admire kori" } },
-      { id: 19, level: 4, q: "Jodi amra ekta empty movie theater-er last row-te thaki, ki hobe?", options: { A: "Movie-r cheye amader romance-i beshi cholbe", B: "Haat ar touch niye choto khato adventure", C: "Full behave korbo, kintu bari fire ashol khela!" } },
-      { id: 20, level: 4, q: "Morning cuddle naki late-night passion—konta tomar beshi priyo?", options: { A: "Lazy morning cuddle (ghum theke uthei)", B: "Late-night intense passion", C: "Duto-i, ekta chara arekta incomplete!" } },
+      // LEVEL 4: Chemistry & Tension (16-20)
+      { level: 4, q: "Amar body-r kon part-ta tomar sobcheye beshi attractive lage?", opts: ["Chokh ar takanor style", "Thont (Lips) ar hashi", "Haat ar shoulder", "Gola (Neck) ar collarbone"] },
+      { level: 4, q: "Jokhon amra khub kachakachi thaki, tokhon kon jinish-ta age notice koro?", opts: ["Tomar perfume ba body scent", "Tomar nishash-er shobdo", "Chokher bhitore takanor gobhirota", "Haat-er touch-er ushnota"] },
+      { level: 4, q: "Ekta room-e shudhu amra duijon ar dorja bondho—prothom ki korbe?", opts: ["Kache tene niye ekta long hug", "Chokhe chokh rekhe kache asha", "Kichu na bole direct kiss", "Peeth theke joriye dhore kane kichu bola"] },
+      { level: 4, q: "Tomar kache kon dhoroner kiss sobcheye beshi romantic?", opts: ["Slow, soft ar deep kiss", "Hothat kore surprise kiss", "Gola ba kaner niche kiss", "Forehead kiss-er por lip kiss"] },
+      { level: 4, q: "Amar kon choto touch-ta tomar shorire goosebumps diye dey?", opts: ["Komor (waist) dhore kache tana", "Chuler bhitore angul chalano", "Golar pashe halka kore chowa", "Haat-er talute angul diye lekha"] },
 
-      // Level 5: Bold Confessions
-      { id: 21, level: 5, q: "Amake niye kono spicy dream ba daydream ki kokhono dekhecho?", options: { A: "Onek bar, kintu sob bolini!", B: "Majhe majhe, jokhon tomake khub miss kori", C: "Ekhono dekhi ni, ajke raate dekhte pari" } },
-      { id: 22, level: 5, q: "Intimate moment-e tumi kon role ta beshi enjoy koro?", options: { A: "Lead neya (being in control)", B: "Follow kora (letting the partner take control)", C: "Switch—duijon-i equal control nibo" } },
-      { id: 23, level: 5, q: "Lights on naki lights off—intimate moment-e konta prefer koro?", options: { A: "Dim/warm light (jate sob dekha jay)", B: "Full lights on (no hiding!)", C: "Complete dark (just feel ar touch)" } },
-      { id: 24, level: 5, q: "Emon kono kotha ache ja tumi amake bolte chao kintu lajja pao?", options: { A: "Amader intimate fantasies niye", B: "Tomake ami koto ta desire kori sheta niye", C: "Kichu specific try korar icche niye" } },
-      { id: 25, level: 5, q: "Jokhon amra intimate thaki, tokhon amar kon sound ba reaction tomar best lage?", options: { A: "Soft sighs ar heavy breathing", B: "Jokhon ami tomar naam dhore daki", C: "Eye contact ar choto choto whispers" } },
+      // LEVEL 5: Late-Night Confessions (21-25)
+      { level: 5, q: "Raat 2-tar somoy amar kotha mone porle beshirbhag ki bhabo?", opts: ["Ekhon jodi pashe thakto!", "Amader kono intimate memory", "Next dekha hole ki korbo tar plan", "Ekta voice note ba message pathabo kina"] },
+      { level: 5, q: "Emon kono kotha ache ja tumi amake bolte cheyeo lajjay boloni?", opts: ["Hya, ekta secret wish ache", "Amar kono ekta habit niye fantasy", "Prothom kobe tomar proti beshi attract hoyechilam", "Ajkei bole felbo jodi tumi jiggesh koro"] },
+      { level: 5, q: "Bhebe dekho amra ekta hotel room-e ba empty flat-e achi—mood kemon thakbe?", opts: ["Pure romantic & slow", "Playful & teasing", "Intense & passionate", "Shob kichu ekshathe"] },
+      { level: 5, q: "Amake niye dekha tomar sobcheye bold swapno-ta kemon chilo?", opts: ["Brishtite bhije ekshathe thaka", "Ekta private night jekhane kono badha nei", "Public-e risk niye kache asha", "Eta shudhu kane kane bolbo!"] },
+      { level: 5, q: "Jodi ami ekhon tomar samne thaktam, amar kon jinish-ta age korte?", opts: ["Shirt/top-er collar dhore kache tantam", "Chokh bondho kore kache ashtam", "Kichu na bole kache boshtam", "Tomake control nite ditam"] },
 
-      // Level 6: Spicy & Passionate
-      { id: 26, level: 6, q: "Foreplay tomar kache koto ta important?", options: { A: "Sobcheye important—jate anticipation peak-e jay", B: "Balance thaka bhalo, beshi long na beshi short na", C: "Majhe majhe skip kore straight action-e jawa beshi exciting" } },
-      { id: 27, level: 6, q: "Kono ekta unexpected jaygay intimate howar icche ache?", options: { A: "Car-er moddhe late night-e", B: "Shower-e ek sathe", C: "Balcony ba chhad-e raater andhokare" } },
-      { id: 28, level: 6, q: "Intimate moment-e rough/wild vibe naki gentle/sensual vibe beshi pochondo?", options: { A: "Gentle, deep ar sensual", B: "Ektu rough, passionate ar wild", C: "Shuru hobe gentle, shesh hobe wild!" } },
-      { id: 29, level: 6, q: "Blindfold ba haat bedhe rakhar (light bondage) idea ta tomar kache kemon lage?", options: { A: "Khub exciting! Try korte chai", B: "Ektu nervous, kintu tomar sathe hole try korbo", C: "Na, ami sob kichu dekhte ar feel korte chai" } },
-      { id: 30, level: 6, q: "Ekta romantic/spicy evening-e tumi amar porone ki dekhte chao?", options: { A: "Kichu ekta lacy/bold ba fitted", B: "Just amar shirt ba khub minimal kichu", C: "Kichu-i na, straight to the point!" } },
+      // LEVEL 6: Heat Rising (26-30)
+      { level: 6, q: "Tomar mood on korar (turn-on) sobcheye fast way konta?", opts: ["Kane kane deep voice-e kotha bola", "Neck ar shoulder-e slow kiss", "Komor dhore nijer dike tene neya", "Eye contact rekhe kache asha"] },
+      { level: 6, q: "Intimate muhurte tumi ki beshi pochondo koro?", opts: ["Slow, passionate ar eye contact", "Ektu wild ar spontaneous", "Teasing ar slow buildup", "Duijoner rhythm-e hariye jawa"] },
+      { level: 6, q: "Dim light naki ekdom andhokar—konta tomar beshi pasondo?", opts: ["Warm dim light (jate chokh dekha jay)", "Ekdom andhokar (shudhu feel kora)", "Candlelight ba fairy lights", "Light matter kore na, tumi thaklei holo"] },
+      { level: 6, q: "Amar kon dress-ta dekhle tomar control rakha kothin hoye jay?", opts: ["Fitted black ba red outfit", "Oversized shirt without anything else", "Saree / traditional with bare waist", "Sleepwear / night dress"] },
+      { level: 6, q: "Ekta perfect intimate night-er shuru-ta tumi kivabe chao?", opts: ["Ekshathe shower ba rain-e bhija", "Slow dance ar music-er sathe", "Bichanay boshe deep kotha theke shuru", "Hothat kore intense passion diye"] },
 
-      // Level 7: Wild & Adventurous
-      { id: 31, level: 7, q: "Roleplay ba notun kono scenario try korar kotha bhabo kokhono?", options: { A: "Hya, strangers meeting at a bar/hotel vibe!", B: "Maybe, jodi duijon-i comfortable thaki", C: "Roleplay dorkar nei, amra nijera-i enough!" } },
-      { id: 32, level: 7, q: "Amader intimate life-e notun kichu experiment korte hole konta age korbe?", options: { A: "Truth or Dare (adult/spicy version)", B: "Massage oil, ice cubes ba sensory play", C: "Ekta whole night no-sleep challenge" } },
-      { id: 33, level: 7, q: "Phone-e ba video call-e spicy moment share korar khetre tomar motamot ki?", options: { A: "Distance thakle eta best way connection rakhar", B: "Ektu teasing thik ache, kintu face-to-face best", C: "Shy feel kori, tai samnasamni-i bhalo" } },
-      { id: 34, level: 7, q: "Jokhon ami tomake tease korte korte ekdom edge-e niye jai, tokhon ki korte icche kore?", options: { A: "Beg korte icche kore jate ar wait na korai", B: "Ulto tomake-i control niye surprise dite icche kore", C: "Oi tension ta aro kichukkhon enjoy korte chai" } },
-      { id: 35, level: 7, q: "Ek raate koto bar porjonto amader energy thakbe bole mone hoy?", options: { A: "Round 1 & 2 is sweet and enough", B: "Joto khon na duijon-i tired hoye ghumiye pori!", C: "Ekbar shuru hole thamano mushkil hobe" } },
+      // LEVEL 7: Deep Desire (31-35)
+      { level: 7, q: "Intimate moment-e tumi kon role-ta beshi enjoy koro?", opts: ["Lead neya ar control kora", "Partner-er kache nijeke chere deya", "Duijon-i equal control neya", "Mood onujayi change kora"] },
+      { level: 7, q: "Amader relationship-e kon new jinish-ta try korar icche ache?", opts: ["Ekta weekend staycation shudhu duijon", "Blindfold ba light teasing game", "Midnight drive-e secluded kono jaygay", "Nijer kono secret fantasy share kora"] },
+      { level: 7, q: "Jokhon ami tomar khub kache thaki, amar kon kaj-ta tomay pagol kore dey?", opts: ["Thont kamre takano", "Golar kache garam nishash fela", "Peeth ba komore haat bulano", "Naam dhore aste kore daka"] },
+      { level: 7, q: "Kono ekta daring place jekhane tumi amar sathe risk nite chao?", opts: ["Parked car at night", "Empty cinema hall-er corner seat", "Chader ek konay raat-er belay", "Lift ba staircase-e 10 second"] },
+      { level: 7, q: "Intimate muhurter por tumi ki korte beshi bhalobasho?", opts: ["Joriye dhore chupchap shuye thaka", "Mathay hat buliye golpo kora", "Abar notun kore kache asha", "Ekshathe kichu khawa ba gaan shona"] },
 
-      // Level 8: Unfiltered & Intense
-      { id: 36, level: 8, q: "Tomar sobcheye boro secret fantasy konta ja ekhono amar sathe hoyni?", options: { A: "Ekta whole weekend sudhu room-er moddhe katano", B: "Kono luxury resort/beach-e wild ekta raat", C: "Emon kichu ja ami sudhu kaner kache bolbo!" } },
-      { id: 37, level: 8, q: "Intimate moment-e dirty talk (spicy kotha bola) tomar kemon lage?", options: { A: "Khub turn on kore, aro beshi chai", B: "Halka-patla hole bhalo lage, beshi na", C: "Kothar cheye action beshi pochondo" } },
-      { id: 38, level: 8, q: "Ajke raate jodi kono rules ba limits na thake, prothom ki korbe?", options: { A: "Tomake ekdom nijer moto kore control korbo", B: "Tomar sob icche gulo ek ek kore puron korbo", C: "Kono plan chara just flow-te jabo" } },
-      { id: 39, level: 8, q: "Intimate howar por (aftercare) tomar ki sobcheye beshi dorkar hoy?", options: { A: "Tight hug kore kotha bola ar forehead kiss", B: "Ek sathe shower neya ba snacks khawa", C: "Chupchap buke matha rekhe ghumiye pora" } },
-      { id: 40, level: 8, q: "Ei 40 ta proshner por ekhon tomar mood kemon?", options: { A: "Fully turned on—ekhon-i dekha kora dorkar!", B: "Ektu blush korchi, kintu khub excited", C: "Ready for the next round in real life!" } }
+      // LEVEL 8: Unfiltered & No Secrets (36-40)
+      { level: 8, q: "Ajke raat-e jodi tomar ekta secret wish kono judgment chara puron kora hoy, konta chaibe?", opts: ["Amar sobcheye bold fantasy-ta aaj try kora", "Sara raat shudhu duijon kono phone chara", "Tumi ajke amar sob kotha shunbe", "Ami ajke tomake purotai surprise debo"] },
+      { level: 8, q: "Amar somporke emon ekta honest confession koro ja age kakhono koro ni:", opts: ["Prothom dekhar din thekei tomar proti crush chilo", "Tomake niye onek raat-e daydream korechi", "Amar moddhe tomar ekta habit niye crazy attraction ache", "Tumi kache ashle amar matha kaj kore na"] },
+      { level: 8, q: "Jodi amader next dekha-ta purotai private hoy, prothom 5 minute ki hobe?", opts: ["Dorja bondho howar sathe sathe kiss", "Kotha chara shudhu tight hug", "Chokhe chokh rekhe slow buildup", "Tumi ja chabe tai hobe"] },
+      { level: 8, q: "Kono filter chara bolo—amar kon jinish-tar proti tumi addicted?", opts: ["Tomar touch ar warmth", "Tomar hashi ar chokh", "Tomar scent ar voice", "Puro manush-tar proti"] },
+      { level: 8, q: "Ei game-ta shesh howar por amader next step ki howa uchit?", opts: ["Call-e eshe ei question-gulo niye kotha bola", "Next dekha howar date-ta ekhoni fix kora", "Ekta voice note-e nijer favorite answer-ta pathano", "Ajkei dekha korar plan kora!"] }
     ];
 
-    // ==========================================
-    // 2. FIREBASE INITIALIZATION & AUTH
-    // ==========================================
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+    // ==================== STATE ====================
+    let mode = 'create'; // 'create' | 'join' | 'pass'
+    let isHost = false;
+    let roomCode = '';
+    let myName = '';
+    let partnerName = '';
+    let currentQ = 0;
+    let myChoice = null;
+    let partnerChoice = null;
+    let matchCount = 0;
+    let passTurn = 1; // 1 or 2 in Pass & Play
 
-    let app = null;
-    let db = null;
-    let auth = null;
-    let currentUser = null;
-    let firebaseReady = false;
-    let unsubscribeRoom = null;
+    // MQTT Client State
+    let mqttClient = null;
+    let isBrokerReady = false;
+    let activeBrokerUrl = '';
+    let hbInterval = null;
 
-    async function initFirebase() {
-      if (!firebaseConfig) {
-        console.warn("Firebase config not found; running in local-capable mode.");
-        return;
-      }
-      try {
-        app = initializeApp(firebaseConfig);
-        db = getFirestore(app);
-        auth = getAuth(app);
+    const BROKERS = [
+      'wss://broker.emqx.io:8084/mqtt',
+      'wss://broker.hivemq.com:8884/mqtt',
+      'wss://test.mosquitto.org:8081/mqtt'
+    ];
 
-        onAuthStateChanged(auth, (user) => {
-          currentUser = user;
-        });
-
-        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-          await signInWithCustomToken(auth, __initial_auth_token);
-        } else {
-          await signInAnonymously(auth);
-        }
-        currentUser = auth.currentUser;
-        firebaseReady = true;
-      } catch (err) {
-        console.error("Firebase init/auth error:", err);
-        showToast("Live connection issue — Pass & Play mode available!", "amber");
-      }
-    }
-
-    async function ensureAuth() {
-      if (!firebaseConfig) return false;
-      if (!firebaseReady) {
-        await initFirebase();
-      }
-      if (!currentUser && auth) {
-        try {
-          if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-            await signInWithCustomToken(auth, __initial_auth_token);
-          } else {
-            await signInAnonymously(auth);
-          }
-          currentUser = auth.currentUser;
-        } catch (e) {
-          console.error("Re-auth failed:", e);
-          return false;
-        }
-      }
-      return Boolean(currentUser && db);
-    }
-
-    // ==========================================
-    // 3. APPLICATION STATE
-    // ==========================================
-    const urlParams = new URLSearchParams(window.location.search);
-    const initialRoomFromUrl = (urlParams.get('room') || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
-
-    const state = {
-      screen: 'home', // 'home' | 'lobby' | 'game' | 'summary'
-      mode: 'online', // 'online' | 'local'
-      homeTab: initialRoomFromUrl ? 'join' : 'online', // 'online' | 'join' | 'local'
-      nickname: '',
-      joinCodeInput: initialRoomFromUrl,
-      localP1Name: 'Ami',
-      localP2Name: 'Tumi',
-      roomCode: '',
-      playerRole: 'player1', // 'player1' | 'player2'
-      isLoading: false,
-      // Synced online room state
-      roomData: {
-        player1Name: 'Player 1',
-        player2Name: '',
-        currentQuestionIndex: 0,
-        answers: {},
-        reaction: null,
-        completed: false
-      },
-      // Pass & play local state
-      localGame: {
-        currentQuestionIndex: 0,
-        turnStep: 'p1_pick', // 'p1_pick' | 'handoff' | 'p2_pick' | 'reveal'
-        answers: {}
-      },
-      lastSeenReactionId: 0,
-      celebratedLevel: 1,
-      summaryFilter: 'all',
-      copyFeedback: false
-    };
-
-    // ==========================================
-    // 4. HELPER UTILITIES
-    // ==========================================
-    function escapeHtml(str) {
-      if (!str) return '';
-      return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
-    }
-
-    function showToast(message, tone = 'rose') {
+    // ==================== TOAST & REACTIONS ====================
+    function showToast(msg, type = 'info') {
       const container = document.getElementById('toast-container');
-      if (!container) return;
       const el = document.createElement('div');
-      const borderClass = tone === 'amber' ? 'border-amber-400/50 text-amber-100' : 'border-rose-400/50 text-rose-50';
-      el.className = `glass-card ${borderClass} px-4 py-3 rounded-2xl text-sm font-medium text-center shadow-xl animate-pop-in`;
-      el.textContent = message;
+      const colors = {
+        info: 'bg-[#1f152b]/95 border-pink-500/40 text-pink-100',
+        success: 'bg-emerald-950/95 border-emerald-500/40 text-emerald-100',
+        error: 'bg-rose-950/95 border-rose-500/40 text-rose-100'
+      };
+      el.className = `px-4 py-3 rounded-2xl border shadow-xl text-xs sm:text-sm font-medium text-center backdrop-blur-md animate-pop-in ${colors[type] || colors.info}`;
+      el.textContent = msg;
       container.appendChild(el);
       setTimeout(() => {
         el.style.opacity = '0';
-        el.style.transform = 'translateY(-8px)';
-        el.style.transition = 'all 0.25s ease';
-        setTimeout(() => el.remove(), 260);
-      }, 2800);
+        el.style.transition = 'opacity 0.3s ease';
+        setTimeout(() => el.remove(), 300);
+      }, 3000);
     }
 
-    function copyToClipboard(text) {
-      const textarea = document.createElement('textarea');
-      textarea.value = text;
-      textarea.style.position = 'fixed';
-      textarea.style.left = '-9999px';
-      textarea.style.top = '0';
-      document.body.appendChild(textarea);
-      textarea.focus();
-      textarea.select();
-      let ok = false;
-      try {
-        ok = document.execCommand('copy');
-      } catch (err) {
-        ok = false;
-      }
-      document.body.removeChild(textarea);
-      return ok;
-    }
-
-    function getInviteUrl(code) {
-      try {
-        const url = new URL(window.location.href);
-        url.searchParams.set('room', code);
-        return url.toString();
-      } catch (e) {
-        const base = window.location.href.split('?')[0];
-        return `${base}?room=${code}`;
-      }
-    }
-
-    function spawnFloatingEmojis(emoji, count = 6) {
+    function spawnFloatingEmoji(emoji) {
       const layer = document.getElementById('reaction-layer');
-      if (!layer) return;
-      for (let i = 0; i < count; i++) {
+      for (let i = 0; i < 4; i++) {
         const span = document.createElement('span');
         span.textContent = emoji;
-        const leftPct = 15 + Math.random() * 70;
-        const delay = i * 90;
-        span.style.position = 'absolute';
-        span.style.left = `${leftPct}%`;
-        span.style.bottom = '90px';
-        span.style.fontSize = `${26 + Math.floor(Math.random() * 14)}px`;
-        span.style.animationDelay = `${delay}ms`;
-        span.className = 'animate-float-up select-none drop-shadow-[0_4px_12px_rgba(244,63,94,0.6)]';
+        span.className = 'absolute bottom-20 text-3xl animate-float-up select-none';
+        span.style.left = (20 + Math.random() * 60) + '%';
+        span.style.animationDelay = (i * 0.12) + 's';
         layer.appendChild(span);
-        setTimeout(() => span.remove(), 2400 + delay);
+        setTimeout(() => span.remove(), 2500);
       }
     }
 
-    function checkAndTriggerLevelUp(qIndex) {
-      const qObj = QUESTIONS[qIndex];
-      if (!qObj) return;
-      if (qObj.level > state.celebratedLevel) {
-        state.celebratedLevel = qObj.level;
-        const lvlInfo = LEVELS[qObj.level - 1];
-        const modal = document.getElementById('level-up-modal');
-        if (modal && lvlInfo) {
-          document.getElementById('level-up-icon').textContent = lvlInfo.icon;
-          document.getElementById('level-up-title').textContent = `Level ${lvlInfo.level}: ${lvlInfo.title}`;
-          document.getElementById('level-up-subtitle').textContent = lvlInfo.hype;
-          modal.classList.remove('hidden');
-          spawnFloatingEmojis(lvlInfo.icon, 7);
+    // ==================== MULTI-BROKER FAST CONNECT ====================
+    function setServerUI(ready, label) {
+      isBrokerReady = ready;
+      const dot = document.getElementById('server-dot');
+      const txt = document.getElementById('server-text');
+      if (ready) {
+        dot.className = 'w-2 h-2 rounded-full bg-emerald-400';
+        txt.textContent = label || 'Live Server Ready';
+      } else {
+        dot.className = 'w-2 h-2 rounded-full bg-amber-400 animate-pulse';
+        txt.textContent = label || 'Live server connect hocche...';
+      }
+    }
+
+    function connectFastestBroker() {
+      return new Promise((resolve, reject) => {
+        if (isBrokerReady && mqttClient && mqttClient.connected) {
+          return resolve(mqttClient);
+        }
+        if (typeof mqtt === 'undefined') {
+          setServerUI(false, 'Script load hocche, abar try koro');
+          return reject(new Error('MQTT library missing'));
+        }
+
+        let settled = false;
+        const clients = [];
+
+        BROKERS.forEach((url) => {
+          try {
+            const cid = 'sparks_' + Math.random().toString(36).substring(2, 10);
+            const c = mqtt.connect(url, {
+              clientId: cid,
+              clean: true,
+              connectTimeout: 7000,
+              reconnectPeriod: 2000,
+              keepalive: 30
+            });
+            clients.push(c);
+
+            c.on('connect', () => {
+              if (!settled) {
+                settled = true;
+                mqttClient = c;
+                activeBrokerUrl = url;
+                setServerUI(true, 'Live Server Ready • Fast');
+                // Close slower brokers
+                clients.forEach((other) => {
+                  if (other !== c) {
+                    try { other.end(true); } catch (e) {}
+                  }
+                });
+                setupMqttListeners(c);
+                resolve(c);
+              }
+            });
+
+            c.on('error', () => {});
+          } catch (e) {}
+        });
+
+        setTimeout(() => {
+          if (!settled) {
+            setServerUI(false, 'Network slow — Pass & Play ready');
+            reject(new Error('Connection timeout'));
+          }
+        }, 7500);
+      });
+    }
+
+    function topicName(code) {
+      return `sparks_secrets_bd_v2/room/${code}`;
+    }
+
+    function publishMsg(payload) {
+      if (!mqttClient || !mqttClient.connected || !roomCode) return;
+      const data = JSON.stringify({
+        ...payload,
+        sender: myName,
+        isHost: isHost,
+        ts: Date.now()
+      });
+      mqttClient.publish(topicName(roomCode), data, { qos: 1 });
+    }
+
+    function setupMqttListeners(client) {
+      client.on('reconnect', () => setServerUI(false, 'Reconnecting...'));
+      client.on('connect', () => {
+        setServerUI(true, 'Live Server Ready • Fast');
+        if (roomCode) {
+          client.subscribe(topicName(roomCode), { qos: 1 });
+        }
+      });
+
+      client.on('message', (topic, message) => {
+        if (topic !== topicName(roomCode)) return;
+        let msg;
+        try { msg = JSON.parse(message.toString()); } catch (e) { return; }
+        // Ignore own messages
+        if (msg.isHost === isHost) return;
+
+        handleRemoteEvent(msg);
+      });
+    }
+
+    function handleRemoteEvent(msg) {
+      if (msg.type === 'JOIN_REQ' && isHost) {
+        partnerName = msg.sender || 'Partner';
+        document.getElementById('wait-guest-name').textContent = partnerName + ' joined! 💖';
+        showToast(`${partnerName} room-e join koreche! 💖`, 'success');
+        publishMsg({
+          type: 'ROOM_START',
+          hostName: myName,
+          guestName: partnerName,
+          currentQ: currentQ,
+          matchCount: matchCount
+        });
+        setTimeout(() => enterGameArena(), 700);
+      }
+      else if (msg.type === 'ROOM_START' && !isHost) {
+        partnerName = msg.hostName || 'Host';
+        currentQ = msg.currentQ || 0;
+        matchCount = msg.matchCount || 0;
+        showToast(`${partnerName}-er sathe connect hoyeche! 💖`, 'success');
+        enterGameArena();
+      }
+      else if (msg.type === 'ANSWER') {
+        partnerChoice = msg.choice;
+        updatePlayerStatuses();
+        checkReveal();
+      }
+      else if (msg.type === 'NEXT_Q') {
+        currentQ = msg.qIndex;
+        if (currentQ >= QUESTIONS.length) {
+          showSummary();
+        } else {
+          renderQuestion();
+        }
+      }
+      else if (msg.type === 'REACTION') {
+        spawnFloatingEmoji(msg.emoji);
+      }
+      else if (msg.type === 'PING') {
+        if (!partnerName && msg.sender) {
+          partnerName = msg.sender;
+          document.getElementById('p2-label').textContent = partnerName;
         }
       }
     }
 
-    window.dismissLevelUp = function() {
-      const modal = document.getElementById('level-up-modal');
-      if (modal) modal.classList.add('hidden');
-    };
-
-    function generateRoomCode() {
-      const presets = ['LOVE', 'KISS', 'FIRE', 'ROSE', 'SOUL', 'HEAT', 'LUST', 'SPARK', 'HEART', 'MINE'];
-      const fourLetterPresets = presets.filter(w => w.length === 4);
-      if (Math.random() < 0.45) {
-        return fourLetterPresets[Math.floor(Math.random() * fourLetterPresets.length)];
-      }
-      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-      let code = '';
-      for (let i = 0; i < 4; i++) {
-        code += chars.charAt(Math.floor(Math.random() * chars.length));
-      }
-      return code;
-    }
-
-    // ==========================================
-    // 5. FIREBASE ROOM ACTIONS (ONLINE MODE)
-    // ==========================================
-    function getRoomDocRef(code) {
-      return doc(db, 'artifacts', appId, 'public', 'data', 'sparks_rooms', code);
-    }
-
-    function subscribeToRoom(code) {
-      if (unsubscribeRoom) {
-        unsubscribeRoom();
-        unsubscribeRoom = null;
-      }
-      const roomRef = getRoomDocRef(code);
-      unsubscribeRoom = onSnapshot(
-        roomRef,
-        (snapshot) => {
-          if (!snapshot.exists()) {
-            showToast("Room bondho hoye geche ba khuje pawa jayni.", "amber");
-            state.screen = 'home';
-            render();
-            return;
-          }
-          const data = snapshot.data();
-          const prevQIndex = state.roomData.currentQuestionIndex;
-          state.roomData = {
-            player1Name: data.player1Name || 'Player 1',
-            player2Name: data.player2Name || '',
-            currentQuestionIndex: typeof data.currentQuestionIndex === 'number' ? data.currentQuestionIndex : 0,
-            answers: data.answers || {},
-            reaction: data.reaction || null,
-            completed: Boolean(data.completed)
-          };
-
-          // Handle incoming real-time reaction from partner
-          if (state.roomData.reaction && state.roomData.reaction.id && state.roomData.reaction.id !== state.lastSeenReactionId) {
-            state.lastSeenReactionId = state.roomData.reaction.id;
-            if (state.roomData.reaction.senderRole !== state.playerRole) {
-              spawnFloatingEmojis(state.roomData.reaction.emoji, 6);
-              const senderName = state.roomData.reaction.senderRole === 'player1' ? state.roomData.player1Name : state.roomData.player2Name;
-              showToast(`${senderName || 'Partner'} reacted ${state.roomData.reaction.emoji}`);
-            }
-          }
-
-          // Auto-transition from lobby to game when partner joins
-          if (state.screen === 'lobby' && state.roomData.player2Name) {
-            state.screen = 'game';
-            showToast(`${state.roomData.player2Name} joined! Let's play ❤️‍🔥`);
-          }
-
-          // Check if game finished
-          if (state.roomData.completed || state.roomData.currentQuestionIndex >= QUESTIONS.length) {
-            state.screen = 'summary';
-          } else if (state.screen === 'game' && state.roomData.currentQuestionIndex !== prevQIndex) {
-            checkAndTriggerLevelUp(state.roomData.currentQuestionIndex);
-          }
-
-          render();
-        },
-        (error) => {
-          console.error("Room snapshot error:", error);
-          showToast("Connection lost. Reconnecting...", "amber");
+    // ==================== LOBBY ACTIONS ====================
+    function switchTab(tab) {
+      mode = tab;
+      ['create', 'join', 'pass'].forEach((t) => {
+        const btn = document.getElementById(`tab-${t}`);
+        const panel = document.getElementById(`panel-${t}`);
+        if (t === tab) {
+          btn.className = 'py-2.5 text-xs sm:text-sm font-semibold rounded-xl transition-all bg-pink-600 text-white shadow-lg';
+          panel.classList.remove('hidden');
+        } else {
+          btn.className = 'py-2.5 text-xs sm:text-sm font-semibold rounded-xl transition-all text-slate-400 hover:text-white';
+          panel.classList.add('hidden');
         }
-      );
+      });
     }
 
-    window.handleCreateRoom = async function() {
-      const nameInput = document.getElementById('nickname-input');
-      const nick = (nameInput ? nameInput.value.trim() : state.nickname.trim()) || 'Ami';
-      state.nickname = nick;
+    async function createLiveRoom() {
+      const nameInput = document.getElementById('create-name').value.trim();
+      myName = nameInput || 'Ami';
+      const btn = document.getElementById('btn-create-room');
+      btn.disabled = true;
+      btn.innerHTML = '<span>Connecting...</span><span class="animate-spin">⏳</span>';
 
-      state.isLoading = true;
-      render();
+      try {
+        await connectFastestBroker();
+        isHost = true;
+        mode = 'create';
+        roomCode = Math.floor(1000 + Math.random() * 9000).toString();
+        currentQ = 0;
+        matchCount = 0;
 
-      const ok = await ensureAuth();
-      if (!ok) {
-        state.isLoading = false;
-        render();
-        showToast("Online server ready noy — Pass & Play try koro!", "amber");
+        mqttClient.subscribe(topicName(roomCode), { qos: 1 });
+
+        // Build clean invite URL
+        const baseUrl = window.location.origin + window.location.pathname;
+        const inviteUrl = `${baseUrl}?room=${roomCode}`;
+
+        document.getElementById('display-room-code').textContent = roomCode;
+        document.getElementById('invite-link-box').value = inviteUrl;
+        document.getElementById('wait-host-name').textContent = myName + ' (You)';
+        document.getElementById('wait-guest-name').textContent = 'Partner-er jonno opekkha...';
+
+        showView('view-waiting');
+        startHeartbeat();
+      } catch (e) {
+        showToast('Network block korche — Pass & Play mode try koro!', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span>Create Live Room</span><span>✨</span>';
+      }
+    }
+
+    async function joinLiveRoom() {
+      const nameInput = document.getElementById('join-name').value.trim();
+      const codeInput = document.getElementById('join-code').value.trim().toUpperCase();
+      if (!codeInput || codeInput.length < 4) {
+        showToast('4-digit Room Code-ta likho age!', 'error');
         return;
       }
 
-      try {
-        let code = generateRoomCode();
-        let roomRef = getRoomDocRef(code);
-        let existing = await getDoc(roomRef);
-        let attempts = 0;
-        while (existing.exists() && attempts < 6) {
-          code = generateRoomCode();
-          roomRef = getRoomDocRef(code);
-          existing = await getDoc(roomRef);
-          attempts++;
-        }
+      myName = nameInput || 'Partner';
+      const btn = document.getElementById('btn-join-room');
+      btn.disabled = true;
+      btn.innerHTML = '<span>Joining Room...</span><span class="animate-spin">⏳</span>';
 
-        const initialData = {
-          roomCode: code,
-          player1Name: nick,
-          player1Uid: currentUser.uid,
-          player2Name: '',
-          player2Uid: '',
-          currentQuestionIndex: 0,
-          answers: {},
-          reaction: null,
-          completed: false,
-          createdAt: Date.now()
+      try {
+        await connectFastestBroker();
+        isHost = false;
+        mode = 'join';
+        roomCode = codeInput;
+
+        mqttClient.subscribe(topicName(roomCode), { qos: 1 }, () => {
+          publishMsg({ type: 'JOIN_REQ' });
+          // Retry join ping a couple times in case host just subscribed
+          setTimeout(() => { if (!partnerName) publishMsg({ type: 'JOIN_REQ' }); }, 1500);
+          setTimeout(() => { if (!partnerName) publishMsg({ type: 'JOIN_REQ' }); }, 3000);
+        });
+
+        startHeartbeat();
+        showToast('Room khuje connect kora hocche...', 'info');
+      } catch (e) {
+        showToast('Server connect hoyni — Pass & Play try koro!', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span>Join Live Room</span><span>💖</span>';
+      }
+    }
+
+    function startPassAndPlay() {
+      const p1 = document.getElementById('pass-p1').value.trim() || 'Player 1';
+      const p2 = document.getElementById('pass-p2').value.trim() || 'Player 2';
+      mode = 'pass';
+      myName = p1;
+      partnerName = p2;
+      currentQ = 0;
+      matchCount = 0;
+      enterGameArena();
+    }
+
+    function startHeartbeat() {
+      if (hbInterval) clearInterval(hbInterval);
+      hbInterval = setInterval(() => {
+        publishMsg({ type: 'PING' });
+      }, 4000);
+    }
+
+    function copyInviteLink() {
+      const box = document.getElementById('invite-link-box');
+      box.select();
+      navigator.clipboard?.writeText(box.value);
+      showToast('Invite link copy hoyeche! Girlfriend-ke pathao 💖', 'success');
+    }
+
+    function shareWhatsApp() {
+      const link = document.getElementById('invite-link-box').value;
+      const text = encodeURIComponent(`Amader Couple's Live Quiz khelbo! Ei link-e tap kore join koro (Code: ${roomCode}): ${link}`);
+      window.open(`https://wa.me/?text=${text}`, '_blank');
+    }
+
+    function leaveRoom() {
+      if (hbInterval) clearInterval(hbInterval);
+      roomCode = '';
+      partnerName = '';
+      showView('view-lobby');
+    }
+
+    // ==================== GAMEPLAY ENGINE ====================
+    function showView(id) {
+      ['view-lobby', 'view-waiting', 'view-game', 'view-summary'].forEach((v) => {
+        document.getElementById(v).classList.toggle('hidden', v !== id);
+      });
+    }
+
+    function enterGameArena() {
+      showView('view-game');
+      document.getElementById('p1-label').textContent = myName;
+      document.getElementById('p2-label').textContent = partnerName || 'Partner';
+      document.getElementById('reaction-bar').classList.toggle('hidden', mode === 'pass');
+      buildLevelDrawer();
+      renderQuestion();
+    }
+
+    function buildLevelDrawer() {
+      const drawer = document.getElementById('level-drawer');
+      drawer.innerHTML = '';
+      LEVELS.forEach((lvl) => {
+        const btn = document.createElement('button');
+        btn.className = 'py-2 px-1 rounded-xl bg-white/5 hover:bg-pink-500/20 border border-white/10 text-[11px] font-semibold text-slate-200 transition';
+        btn.textContent = lvl.name;
+        btn.onclick = () => {
+          const targetIdx = (lvl.id - 1) * 5;
+          currentQ = targetIdx;
+          drawer.classList.add('hidden');
+          if (mode !== 'pass') {
+            publishMsg({ type: 'NEXT_Q', qIndex: currentQ });
+          }
+          renderQuestion();
         };
-
-        await setDoc(roomRef, initialData);
-        state.mode = 'online';
-        state.roomCode = code;
-        state.playerRole = 'player1';
-        state.roomData = initialData;
-        state.celebratedLevel = 1;
-        state.isLoading = false;
-        state.screen = 'lobby';
-        subscribeToRoom(code);
-        render();
-      } catch (err) {
-        console.error("Create room failed:", err);
-        state.isLoading = false;
-        render();
-        showToast("Room create korte somossa hoyeche. Abar try koro!", "amber");
-      }
-    };
-
-    window.handleJoinRoom = async function() {
-      const nameInput = document.getElementById('nickname-input');
-      const codeInput = document.getElementById('join-code-input');
-      const nick = (nameInput ? nameInput.value.trim() : state.nickname.trim()) || 'Tumi';
-      const code = (codeInput ? codeInput.value.trim() : state.joinCodeInput.trim()).toUpperCase().replace(/[^A-Z0-9]/g, '');
-
-      state.nickname = nick;
-      state.joinCodeInput = code;
-
-      if (code.length !== 4) {
-        showToast("4-letter Room Code ta likho!", "amber");
-        return;
-      }
-
-      state.isLoading = true;
-      render();
-
-      const ok = await ensureAuth();
-      if (!ok) {
-        state.isLoading = false;
-        render();
-        showToast("Online server ready noy — Pass & Play try koro!", "amber");
-        return;
-      }
-
-      try {
-        const roomRef = getRoomDocRef(code);
-        const snap = await getDoc(roomRef);
-        if (!snap.exists()) {
-          state.isLoading = false;
-          render();
-          showToast(`"${code}" room ta khuje pawa jayni! Code check koro.`, "amber");
-          return;
-        }
-
-        const data = snap.data();
-        // Determine role: if creator rejoins with same UID, keep player1, otherwise join as player2
-        let role = 'player2';
-        if (data.player1Uid === currentUser.uid && !data.player2Name) {
-          role = 'player1';
-        }
-
-        if (role === 'player2') {
-          await updateDoc(roomRef, {
-            player2Name: nick,
-            player2Uid: currentUser.uid
-          });
-        } else {
-          await updateDoc(roomRef, {
-            player1Name: nick
-          });
-        }
-
-        state.mode = 'online';
-        state.roomCode = code;
-        state.playerRole = role;
-        state.celebratedLevel = QUESTIONS[data.currentQuestionIndex || 0]?.level || 1;
-        state.isLoading = false;
-        state.screen = 'game';
-        subscribeToRoom(code);
-        render();
-      } catch (err) {
-        console.error("Join room failed:", err);
-        state.isLoading = false;
-        render();
-        showToast("Room-e join kora jacche na. Abar try koro!", "amber");
-      }
-    };
-
-    window.handleCopyInviteLink = function() {
-      const link = getInviteUrl(state.roomCode);
-      const success = copyToClipboard(link);
-      state.copyFeedback = true;
-      render();
-      if (success) {
-        showToast("Invite link copied! Girlfriend-ke pathiye dao 💌");
-      } else {
-        showToast(`Room Code: ${state.roomCode} — Link copy hoyeche!`);
-      }
-      setTimeout(() => {
-        state.copyFeedback = false;
-        render();
-      }, 2500);
-    };
-
-    window.startGameFromLobby = function() {
-      state.screen = 'game';
-      render();
-    };
-
-    window.selectOptionOnline = async function(optionKey) {
-      if (!currentUser || !db || !state.roomCode) return;
-      const qIdx = state.roomData.currentQuestionIndex;
-      const qKey = `q${qIdx}`;
-      const existingAns = state.roomData.answers?.[qKey] || {};
-
-      // Prevent changing once both have locked in & revealed
-      if (existingAns.player1 && existingAns.player2) return;
-
-      try {
-        const roomRef = getRoomDocRef(state.roomCode);
-        await updateDoc(roomRef, {
-          [`answers.${qKey}.${state.playerRole}`]: optionKey
-        });
-      } catch (err) {
-        console.error("Answer update error:", err);
-        showToast("Answer save hoyni, abar tap koro!", "amber");
-      }
-    };
-
-    window.sendReaction = async function(emoji) {
-      spawnFloatingEmojis(emoji, 6);
-      if (state.mode === 'online' && currentUser && db && state.roomCode) {
-        try {
-          const reactionPayload = {
-            emoji,
-            senderRole: state.playerRole,
-            id: Date.now() + Math.floor(Math.random() * 1000)
-          };
-          state.lastSeenReactionId = reactionPayload.id;
-          const roomRef = getRoomDocRef(state.roomCode);
-          await updateDoc(roomRef, { reaction: reactionPayload });
-        } catch (err) {
-          console.error("Reaction sync error:", err);
-        }
-      }
-    };
-
-    window.advanceQuestionOnline = async function() {
-      if (!currentUser || !db || !state.roomCode) return;
-      const nextIdx = state.roomData.currentQuestionIndex + 1;
-      const roomRef = getRoomDocRef(state.roomCode);
-      try {
-        if (nextIdx >= QUESTIONS.length) {
-          await updateDoc(roomRef, { completed: true });
-        } else {
-          await updateDoc(roomRef, { currentQuestionIndex: nextIdx });
-        }
-      } catch (err) {
-        console.error("Advance question error:", err);
-        showToast("Next question-e jawa jacche na, abar try koro.", "amber");
-      }
-    };
-
-    window.resetOnlineRoom = async function() {
-      if (!currentUser || !db || !state.roomCode) return;
-      const roomRef = getRoomDocRef(state.roomCode);
-      try {
-        state.celebratedLevel = 1;
-        await updateDoc(roomRef, {
-          currentQuestionIndex: 0,
-          answers: {},
-          completed: false
-        });
-        state.screen = 'game';
-        render();
-      } catch (err) {
-        console.error("Reset error:", err);
-      }
-    };
-
-    // ==========================================
-    // 6. PASS & PLAY (LOCAL SAME-PHONE MODE)
-    // ==========================================
-    window.startLocalMode = function() {
-      const p1Input = document.getElementById('local-p1-input');
-      const p2Input = document.getElementById('local-p2-input');
-      state.localP1Name = (p1Input ? p1Input.value.trim() : state.localP1Name) || 'Ami';
-      state.localP2Name = (p2Input ? p2Input.value.trim() : state.localP2Name) || 'Tumi';
-      state.mode = 'local';
-      state.celebratedLevel = 1;
-      state.localGame = {
-        currentQuestionIndex: 0,
-        turnStep: 'p1_pick',
-        answers: {}
-      };
-      state.screen = 'game';
-      render();
-    };
-
-    window.selectOptionLocal = function(optionKey) {
-      const idx = state.localGame.currentQuestionIndex;
-      const qKey = `q${idx}`;
-      if (!state.localGame.answers[qKey]) {
-        state.localGame.answers[qKey] = {};
-      }
-      if (state.localGame.turnStep === 'p1_pick') {
-        state.localGame.answers[qKey].player1 = optionKey;
-        state.localGame.turnStep = 'handoff';
-        render();
-      } else if (state.localGame.turnStep === 'p2_pick') {
-        state.localGame.answers[qKey].player2 = optionKey;
-        state.localGame.turnStep = 'reveal';
-        render();
-      }
-    };
-
-    window.confirmLocalHandoff = function() {
-      state.localGame.turnStep = 'p2_pick';
-      render();
-    };
-
-    window.advanceQuestionLocal = function() {
-      const nextIdx = state.localGame.currentQuestionIndex + 1;
-      if (nextIdx >= QUESTIONS.length) {
-        state.screen = 'summary';
-        render();
-      } else {
-        state.localGame.currentQuestionIndex = nextIdx;
-        state.localGame.turnStep = 'p1_pick';
-        checkAndTriggerLevelUp(nextIdx);
-        render();
-      }
-    };
-
-    // ==========================================
-    // 7. UI NAVIGATION & INPUT HANDLERS
-    // ==========================================
-    window.setHomeTab = function(tab) {
-      state.homeTab = tab;
-      render();
-    };
-
-    window.updateNickname = function(val) {
-      state.nickname = val;
-    };
-
-    window.updateJoinCode = function(val) {
-      state.joinCodeInput = val.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
-    };
-
-    window.updateLocalNames = function(who, val) {
-      if (who === 1) state.localP1Name = val;
-      if (who === 2) state.localP2Name = val;
-    };
-
-    window.setSummaryFilter = function(filter) {
-      state.summaryFilter = filter;
-      render();
-    };
-
-    window.goHome = function() {
-      if (unsubscribeRoom) {
-        unsubscribeRoom();
-        unsubscribeRoom = null;
-      }
-      state.screen = 'home';
-      render();
-    };
-
-    // ==========================================
-    // 8. VIEW RENDERERS
-    // ==========================================
-    function renderHomeScreen() {
-      const isJoin = state.homeTab === 'join';
-      const isLocal = state.homeTab === 'local';
-      const isOnline = state.homeTab === 'online';
-
-      return `
-        <div class="flex-1 flex flex-col justify-center py-2 animate-pop-in">
-          <!-- Brand Header -->
-          <div class="text-center mb-6">
-            <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full glass-subtle text-xs font-semibold text-rose-300 mb-3">
-              <span>❤️‍🔥</span>
-              <span>40 Intimate Questions • 8 Spice Levels</span>
-            </div>
-            <h1 class="font-serif text-3xl sm:text-4xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-rose-300 via-pink-200 to-amber-300">
-              Sparks & Secrets
-            </h1>
-            <p class="text-sm text-rose-200/70 mt-1.5">Couple's Live Real-Time Intimate Quiz</p>
-          </div>
-
-          <!-- Main Card -->
-          <div class="glass-card rounded-3xl p-5 sm:p-6">
-            <!-- Mode Selector Pills -->
-            <div class="grid grid-cols-3 gap-1.5 p-1.5 rounded-2xl bg-black/40 border border-white/5 mb-6">
-              <button onclick="setHomeTab('online')" class="py-2.5 px-2 rounded-xl text-xs font-semibold transition-all ${isOnline ? 'bg-gradient-to-r from-rose-500 to-pink-600 text-white shadow-lg' : 'text-rose-200/60 hover:text-white'}">
-                Create Room
-              </button>
-              <button onclick="setHomeTab('join')" class="py-2.5 px-2 rounded-xl text-xs font-semibold transition-all ${isJoin ? 'bg-gradient-to-r from-rose-500 to-pink-600 text-white shadow-lg' : 'text-rose-200/60 hover:text-white'}">
-                Join Room
-              </button>
-              <button onclick="setHomeTab('local')" class="py-2.5 px-2 rounded-xl text-xs font-semibold transition-all ${isLocal ? 'bg-gradient-to-r from-amber-500 to-rose-500 text-white shadow-lg' : 'text-rose-200/60 hover:text-white'}">
-                Pass & Play
-              </button>
-            </div>
-
-            ${isLocal ? `
-              <!-- Pass & Play (Same Phone) -->
-              <div class="space-y-4">
-                <div class="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-400/20 text-xs text-amber-200/90 leading-relaxed">
-                  📱 <strong>Same Phone Mode:</strong> Ekjon age option select korbe (secret thakbe), tarpor phone partner-ke dile duijoner choice ekshathe reveal hobe!
-                </div>
-                <div>
-                  <label class="block text-xs font-semibold uppercase tracking-wider text-rose-200/70 mb-1.5">Player 1 Nickname</label>
-                  <input id="local-p1-input" type="text" maxlength="16" value="${escapeHtml(state.localP1Name)}" oninput="updateLocalNames(1, this.value)" placeholder="e.g. Ami"
-                    class="w-full px-4 py-3.5 rounded-2xl bg-white/5 border border-rose-500/25 text-white placeholder-rose-300/30 focus:outline-none focus:border-rose-400 text-base" />
-                </div>
-                <div>
-                  <label class="block text-xs font-semibold uppercase tracking-wider text-rose-200/70 mb-1.5">Player 2 Nickname</label>
-                  <input id="local-p2-input" type="text" maxlength="16" value="${escapeHtml(state.localP2Name)}" oninput="updateLocalNames(2, this.value)" placeholder="e.g. Tumi / Jaan"
-                    class="w-full px-4 py-3.5 rounded-2xl bg-white/5 border border-rose-500/25 text-white placeholder-rose-300/30 focus:outline-none focus:border-rose-400 text-base" />
-                </div>
-                <button onclick="startLocalMode()" class="w-full py-4 mt-2 rounded-2xl btn-rose-gold font-bold text-white text-base tracking-wide flex items-center justify-center gap-2">
-                  <span>Start Pass & Play</span>
-                  <span>🔥</span>
-                </button>
-              </div>
-            ` : `
-              <!-- Live Online (2 Phones) -->
-              <div class="space-y-4">
-                <div>
-                  <label class="block text-xs font-semibold uppercase tracking-wider text-rose-200/70 mb-1.5">Tomar Nickname</label>
-                  <input id="nickname-input" type="text" maxlength="16" value="${escapeHtml(state.nickname)}" oninput="updateNickname(this.value)"
-                    placeholder="${isJoin ? 'e.g. Jaan / Her Name' : 'e.g. Ami / Your Name'}"
-                    class="w-full px-4 py-3.5 rounded-2xl bg-white/5 border border-rose-500/25 text-white placeholder-rose-300/30 focus:outline-none focus:border-rose-400 text-base" />
-                </div>
-
-                ${isJoin ? `
-                  <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-rose-200/70 mb-1.5">4-Letter Room Code</label>
-                    <input id="join-code-input" type="text" maxlength="4" value="${escapeHtml(state.joinCodeInput)}" oninput="updateJoinCode(this.value)"
-                      placeholder="e.g. LOVE"
-                      class="w-full px-4 py-3.5 rounded-2xl bg-white/5 border border-amber-400/35 text-amber-300 font-extrabold tracking-[0.35em] text-center uppercase placeholder-rose-300/25 focus:outline-none focus:border-amber-400 text-xl" />
-                  </div>
-                  <button onclick="handleJoinRoom()" ${state.isLoading ? 'disabled' : ''} class="w-full py-4 mt-2 rounded-2xl btn-rose-gold font-bold text-white text-base tracking-wide flex items-center justify-center gap-2 disabled:opacity-60">
-                    ${state.isLoading ? '<span>Joining Room...</span>' : '<span>Join Live Room</span><span>💘</span>'}
-                  </button>
-                ` : `
-                  <div class="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-400/20 text-xs text-rose-200/85 leading-relaxed">
-                    🔗 <strong>2 Phones Real-Time:</strong> Room create kore invite link-ta girlfriend-ke pathao. Duijon nijer phone-e option click korle live reveal hobe!
-                  </div>
-                  <button onclick="handleCreateRoom()" ${state.isLoading ? 'disabled' : ''} class="w-full py-4 mt-2 rounded-2xl btn-rose-gold font-bold text-white text-base tracking-wide flex items-center justify-center gap-2 disabled:opacity-60">
-                    ${state.isLoading ? '<span>Creating Room...</span>' : '<span>Create Live Room</span><span>✨</span>'}
-                  </button>
-                `}
-              </div>
-            `}
-          </div>
-
-          <!-- Footer Note -->
-          <p class="text-center text-xs text-rose-200/40 mt-5">
-            Level 1 (Sweet) theke shuru kore Level 8 (Unfiltered) porjonto 🌶️
-          </p>
-        </div>
-      `;
+        drawer.appendChild(btn);
+      });
     }
 
-    function renderLobbyScreen() {
-      const inviteLink = getInviteUrl(state.roomCode);
-      return `
-        <div class="flex-1 flex flex-col justify-center py-2 animate-pop-in">
-          <div class="flex items-center justify-between mb-4">
-            <button onclick="goHome()" class="px-3 py-2 rounded-xl glass-subtle text-xs font-medium text-rose-200/80 hover:text-white">
-              ← Back
-            </button>
-            <span class="text-xs font-semibold text-emerald-400 flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-              Live Room Active
-            </span>
-          </div>
-
-          <div class="glass-card rounded-3xl p-6 text-center">
-            <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-rose-500/25 to-amber-500/25 border border-rose-400/30 text-3xl mb-3">
-              💌
-            </div>
-            <h2 class="font-serif text-2xl font-bold text-white">Invite Your Partner</h2>
-            <p class="text-xs text-rose-200/70 mt-1 mb-5">Ei link ba code-ta girlfriend-ke pathao, o join korlei game shuru hobe!</p>
-
-            <!-- Giant Room Code Box -->
-            <div class="p-4 rounded-2xl bg-black/45 border border-amber-400/30 mb-4">
-              <span class="block text-[11px] uppercase tracking-widest text-rose-200/50 mb-1">Room Code</span>
-              <div class="text-4xl font-extrabold tracking-[0.3em] text-transparent bg-clip-text bg-gradient-to-r from-rose-300 via-white to-amber-300 pl-2">
-                ${escapeHtml(state.roomCode)}
-              </div>
-            </div>
-
-            <!-- Copy Invite Link Button -->
-            <button onclick="handleCopyInviteLink()" class="w-full py-4 rounded-2xl btn-rose-gold font-bold text-white text-sm sm:text-base flex items-center justify-center gap-2 mb-3">
-              <span>${state.copyFeedback ? '✅ Link Copied!' : '📋 Copy Invite Link'}</span>
-            </button>
-
-            <div class="text-[11px] text-rose-200/45 truncate px-2 mb-6 select-all">
-              ${escapeHtml(inviteLink)}
-            </div>
-
-            <!-- Live Player Connection Status -->
-            <div class="space-y-2.5 text-left mb-6">
-              <div class="flex items-center justify-between p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-400/25">
-                <div class="flex items-center gap-2.5">
-                  <span class="text-lg">👑</span>
-                  <div>
-                    <div class="text-sm font-bold text-white">${escapeHtml(state.roomData.player1Name)} <span class="text-xs font-normal text-emerald-300">(You)</span></div>
-                    <div class="text-[11px] text-emerald-300/80">Connected & Ready</div>
-                  </div>
-                </div>
-                <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300">✅ Online</span>
-              </div>
-
-              <div class="flex items-center justify-between p-3.5 rounded-2xl bg-white/[0.03] border border-rose-500/20">
-                <div class="flex items-center gap-2.5">
-                  <span class="text-lg animate-pulse">⏳</span>
-                  <div>
-                    <div class="text-sm font-semibold text-rose-100">Waiting for Partner...</div>
-                    <div class="text-[11px] text-rose-200/50">Link open korlei auto-connect hobe</div>
-                  </div>
-                </div>
-                <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/15 text-amber-300 animate-pulse">Waiting</span>
-              </div>
-            </div>
-
-            <button onclick="startGameFromLobby()" class="w-full py-3 rounded-xl glass-subtle text-xs font-semibold text-rose-200/75 hover:text-white transition">
-              Partner join korar agei proshno dekho →
-            </button>
-          </div>
-        </div>
-      `;
+    function toggleLevelDrawer() {
+      document.getElementById('level-drawer').classList.toggle('hidden');
     }
 
-    function renderGameScreen() {
-      const isOnline = state.mode === 'online';
-      const qIdx = isOnline ? state.roomData.currentQuestionIndex : state.localGame.currentQuestionIndex;
-      const question = QUESTIONS[qIdx] || QUESTIONS[0];
-      const levelInfo = LEVELS[question.level - 1];
-      const qKey = `q${qIdx}`;
-      const progressPct = Math.round(((qIdx + 1) / QUESTIONS.length) * 100);
+    function renderQuestion() {
+      myChoice = null;
+      partnerChoice = null;
+      passTurn = 1;
 
-      // Names & Answers
-      const p1Name = isOnline ? state.roomData.player1Name : state.localP1Name;
-      const p2Name = isOnline ? (state.roomData.player2Name || 'Partner') : state.localP2Name;
-      const ansObj = isOnline ? (state.roomData.answers?.[qKey] || {}) : (state.localGame.answers?.[qKey] || {});
-      const p1Choice = ansObj.player1 || null;
-      const p2Choice = ansObj.player2 || null;
+      const item = QUESTIONS[currentQ];
+      const lvl = LEVELS[item.level - 1];
 
-      // In Local Pass & Play mode, show Privacy Handoff Screen between Player 1 and Player 2
-      if (!isOnline && state.localGame.turnStep === 'handoff') {
-        return `
-          <div class="flex-1 flex flex-col justify-between py-1 animate-pop-in">
-            ${renderGameHeader(qIdx, levelInfo, progressPct, false)}
+      document.getElementById('game-level-badge').textContent = lvl.name;
+      document.getElementById('game-q-counter').textContent = `Q ${currentQ + 1} / ${QUESTIONS.length}`;
+      document.getElementById('level-subtitle').textContent = `${lvl.name} • ${lvl.title}`;
+      document.getElementById('question-text').textContent = item.q;
+      document.getElementById('match-count').textContent = matchCount;
+      document.getElementById('reveal-box').classList.add('hidden');
 
-            <div class="glass-card rounded-3xl p-7 text-center my-auto border-amber-400/35">
-              <div class="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-rose-500/25 to-amber-500/25 border border-amber-400/30 flex items-center justify-center text-3xl mb-4">
-                🙈
-              </div>
-              <span class="inline-block px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 mb-3">
-                ✅ ${escapeHtml(p1Name)} Locked In!
-              </span>
-              <h2 class="font-serif text-2xl font-bold text-white mb-2">
-                Ebar Phone-ta ${escapeHtml(p2Name)}-ke Dao!
-              </h2>
-              <p class="text-sm text-rose-200/75 mb-7 leading-relaxed">
-                ${escapeHtml(p1Name)}-er choice ekhon hidden ache. ${escapeHtml(p2Name)} nijer option select korle duijoner answer ekshathe reveal hobe!
-              </p>
-              <button onclick="confirmLocalHandoff()" class="w-full py-4 rounded-2xl btn-rose-gold font-bold text-white text-base">
-                Ami ${escapeHtml(p2Name)}, Show Question 👀
-              </button>
-            </div>
+      const passBanner = document.getElementById('pass-turn-banner');
+      if (mode === 'pass') {
+        passBanner.classList.remove('hidden');
+        document.getElementById('pass-active-player').textContent = myName;
+      } else {
+        passBanner.classList.add('hidden');
+      }
 
-            <div class="h-4"></div>
-          </div>
+      const list = document.getElementById('options-list');
+      list.innerHTML = '';
+
+      item.opts.forEach((optText, idx) => {
+        const btn = document.createElement('button');
+        btn.id = `opt-btn-${idx}`;
+        btn.className = 'w-full text-left p-4 rounded-2xl option-card flex items-center gap-3 text-sm text-slate-100 font-medium';
+        btn.innerHTML = `
+          <span class="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold shrink-0">${String.fromCharCode(65 + idx)}</span>
+          <span class="leading-snug">${optText}</span>
         `;
+        btn.onclick = () => selectOption(idx);
+        list.appendChild(btn);
+      });
+
+      updatePlayerStatuses();
+    }
+
+    function updatePlayerStatuses() {
+      const p1St = document.getElementById('p1-status');
+      const p2St = document.getElementById('p2-status');
+
+      if (myChoice !== null) {
+        p1St.textContent = 'Locked ✓';
+        p1St.className = 'text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-semibold';
+      } else {
+        p1St.textContent = 'Choosing...';
+        p1St.className = 'text-xs px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300';
       }
 
-      // Determine reveal & current player perspective
-      const bothAnswered = isOnline ? Boolean(p1Choice && p2Choice) : (state.localGame.turnStep === 'reveal');
-      const isMatch = bothAnswered && p1Choice === p2Choice;
-
-      // Active voter perspective
-      const myRole = isOnline ? state.playerRole : (state.localGame.turnStep === 'p2_pick' ? 'player2' : 'player1');
-      const myChoice = myRole === 'player1' ? p1Choice : p2Choice;
-      const partnerChoice = myRole === 'player1' ? p2Choice : p1Choice;
-      const myName = myRole === 'player1' ? p1Name : p2Name;
-      const otherName = myRole === 'player1' ? p2Name : p1Name;
-
-      return `
-        <div class="flex-1 flex flex-col justify-between gap-3.5 animate-pop-in">
-          <!-- Top Bar: Spice Level + Progress -->
-          ${renderGameHeader(qIdx, levelInfo, progressPct, isOnline)}
-
-          <!-- Live Partner Status Pills -->
-          ${isOnline ? `
-            <div class="grid grid-cols-2 gap-2">
-              <div class="px-3 py-2 rounded-2xl glass-subtle flex items-center justify-between text-xs">
-                <span class="font-semibold text-white truncate max-w-[95px]">${escapeHtml(myName)} (You)</span>
-                ${myChoice
-                  ? `<span class="text-emerald-300 font-bold">✅ Locked</span>`
-                  : `<span class="text-rose-300/75 animate-pulse">Picking...</span>`
-                }
-              </div>
-              <div class="px-3 py-2 rounded-2xl glass-subtle flex items-center justify-between text-xs">
-                <span class="font-semibold text-amber-200 truncate max-w-[95px]">${escapeHtml(otherName)}</span>
-                ${!state.roomData.player2Name
-                  ? `<button onclick="handleCopyInviteLink()" class="text-amber-300 underline font-semibold">Invite 🔗</button>`
-                  : partnerChoice
-                    ? `<span class="text-emerald-300 font-bold">${bothAnswered ? '✅ Revealed' : '🔒 Ready!'}</span>`
-                    : `<span class="text-amber-200/70 animate-pulse">⏳ Thinking...</span>`
-                }
-              </div>
-            </div>
-          ` : `
-            <div class="px-3.5 py-2 rounded-2xl glass-subtle flex items-center justify-between text-xs">
-              <span class="text-rose-200/80">Current Turn:</span>
-              <span class="font-bold text-amber-300">
-                ${bothAnswered ? '✨ Both Answered — Live Reveal!' : `👉 ${escapeHtml(myName)}'s Secret Pick`}
-              </span>
-            </div>
-          `}
-
-          <!-- Simultaneous Reveal Result Banner -->
-          ${bothAnswered ? `
-            <div class="p-3.5 rounded-2xl text-center border animate-pop-in ${
-              isMatch
-                ? 'bg-gradient-to-r from-rose-500/25 via-pink-500/20 to-amber-500/25 border-amber-400/50 shadow-[0_0_25px_rgba(245,158,11,0.2)]'
-                : 'bg-rose-950/50 border-rose-400/35'
-            }">
-              <div class="text-base font-extrabold tracking-wide ${isMatch ? 'text-amber-300' : 'text-rose-200'}">
-                ${isMatch ? 'Perfect Match! ❤️‍🔥' : 'Spicy Twist! 👀'}
-              </div>
-              <div class="text-xs text-rose-100/80 mt-0.5">
-                ${isMatch
-                  ? `Duijon-i Option ${p1Choice} choose korecho! Same vibe ✨`
-                  : `${escapeHtml(p1Name)} chose <strong>${p1Choice}</strong> • ${escapeHtml(p2Name)} chose <strong>${p2Choice}</strong>`
-                }
-              </div>
-            </div>
-          ` : ''}
-
-          <!-- Question Card -->
-          <div class="glass-card rounded-3xl p-5 sm:p-6 flex-1 flex flex-col justify-between">
-            <div>
-              <div class="flex items-center justify-between gap-2 mb-3">
-                <span class="text-xs font-bold uppercase tracking-wider text-rose-400">Question #${question.id}</span>
-                <span class="text-[11px] font-medium text-rose-200/60">${escapeHtml(levelInfo.title)}</span>
-              </div>
-              <h2 class="font-serif text-xl sm:text-2xl font-bold text-white leading-snug mb-5">
-                ${escapeHtml(question.q)}
-              </h2>
-
-              <!-- 3 Option Buttons -->
-              <div class="space-y-3">
-                ${['A', 'B', 'C'].map(optKey => {
-                  const optText = question.options[optKey];
-                  const isMyPick = myChoice === optKey;
-                  const isP1Pick = p1Choice === optKey;
-                  const isP2Pick = p2Choice === optKey;
-
-                  let cardClasses = 'bg-white/[0.04] border-white/10 hover:border-rose-400/45';
-                  let badgeClasses = 'bg-white/10 text-rose-200';
-
-                  if (!bothAnswered) {
-                    if (isMyPick) {
-                      cardClasses = 'bg-rose-500/20 border-rose-500 shadow-[0_0_20px_rgba(244,63,94,0.28)]';
-                      badgeClasses = 'bg-rose-500 text-white';
-                    }
-                  } else {
-                    if (isP1Pick && isP2Pick) {
-                      cardClasses = 'bg-gradient-to-r from-rose-500/25 to-amber-500/25 border-amber-400 shadow-[0_0_22px_rgba(245,158,11,0.28)]';
-                      badgeClasses = 'bg-gradient-to-br from-rose-500 to-amber-500 text-white';
-                    } else if (isP1Pick) {
-                      cardClasses = 'bg-rose-500/20 border-rose-400';
-                      badgeClasses = 'bg-rose-500 text-white';
-                    } else if (isP2Pick) {
-                      cardClasses = 'bg-amber-500/20 border-amber-400';
-                      badgeClasses = 'bg-amber-500 text-slate-950';
-                    } else {
-                      cardClasses = 'bg-white/[0.02] border-white/5 opacity-55';
-                    }
-                  }
-
-                  const clickFn = isOnline
-                    ? `selectOptionOnline('${optKey}')`
-                    : `selectOptionLocal('${optKey}')`;
-
-                  return `
-                    <button onclick="${clickFn}" ${bothAnswered ? 'disabled' : ''}
-                      class="w-full text-left p-4 rounded-2xl border transition-all duration-200 active:scale-[0.98] flex flex-col gap-2 ${cardClasses}">
-                      <div class="flex items-start gap-3">
-                        <span class="w-8 h-8 rounded-xl shrink-0 flex items-center justify-center font-extrabold text-sm ${badgeClasses}">
-                          ${optKey}
-                        </span>
-                        <span class="text-sm sm:text-[15px] font-medium text-white leading-snug pt-1">
-                          ${escapeHtml(optText)}
-                        </span>
-                      </div>
-
-                      ${bothAnswered && (isP1Pick || isP2Pick) ? `
-                        <div class="flex flex-wrap gap-1.5 pl-11 pt-0.5">
-                          ${isP1Pick ? `
-                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-500/30 text-rose-100 border border-rose-400/40">
-                              💖 ${escapeHtml(p1Name)}
-                            </span>
-                          ` : ''}
-                          ${isP2Pick ? `
-                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/30 text-amber-100 border border-amber-400/40">
-                              🔥 ${escapeHtml(p2Name)}
-                            </span>
-                          ` : ''}
-                        </div>
-                      ` : ''}
-                    </button>
-                  `;
-                }).join('')}
-              </div>
-            </div>
-
-            <!-- Waiting Hint or Next Question Button -->
-            <div class="mt-5 pt-3 border-t border-white/10">
-              ${bothAnswered ? `
-                <button onclick="${isOnline ? 'advanceQuestionOnline()' : 'advanceQuestionLocal()'}"
-                  class="w-full py-4 rounded-2xl btn-rose-gold font-bold text-white text-base tracking-wide flex items-center justify-center gap-2 animate-pop-in">
-                  <span>${qIdx + 1 >= QUESTIONS.length ? 'See Final Compatibility Score ❤️‍🔥' : 'Next Question →'}</span>
-                </button>
-              ` : `
-                <div class="text-center text-xs text-rose-200/60 py-2">
-                  ${isOnline
-                    ? (myChoice
-                        ? `🔒 Tomar choice locked! ${escapeHtml(otherName)} select korlei live reveal hobe...`
-                        : `👆 Ekta option tap koro (partner dekhte pabe na jotokkhon na o-o pick kore)`)
-                    : `👆 ${escapeHtml(myName)}, tomar secret choice tap koro`
-                  }
-                </div>
-              `}
-            </div>
-          </div>
-
-          <!-- Live Reaction Bar -->
-          <div class="glass-subtle rounded-2xl px-3 py-2.5 flex items-center justify-between">
-            <span class="text-[11px] font-semibold text-rose-200/60 pl-1">Live Reaction:</span>
-            <div class="flex items-center gap-1.5 sm:gap-2">
-              ${['❤️', '🔥', '😳', '😘', '😈'].map(emoji => `
-                <button onclick="sendReaction('${emoji}')"
-                  class="w-10 h-10 rounded-xl bg-white/5 hover:bg-rose-500/25 active:scale-90 transition flex items-center justify-center text-xl">
-                  ${emoji}
-                </button>
-              `).join('')}
-            </div>
-          </div>
-        </div>
-      `;
+      if (partnerChoice !== null) {
+        p2St.textContent = 'Locked ✓';
+        p2St.className = 'text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-semibold';
+      } else {
+        p2St.textContent = 'Thinking...';
+        p2St.className = 'text-xs px-2 py-0.5 rounded-full bg-white/10 text-slate-400';
+      }
     }
 
-    function renderGameHeader(qIdx, levelInfo, progressPct, isOnline) {
-      return `
-        <div class="space-y-2">
-          <div class="flex items-center justify-between gap-2">
-            <!-- Spice Level Badge -->
-            <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-rose-500/25 to-amber-500/20 border border-rose-400/35 text-xs font-bold text-rose-100">
-              <span>${levelInfo.badge}</span>
-            </div>
+    function selectOption(idx) {
+      if (mode === 'pass') {
+        if (passTurn === 1) {
+          myChoice = idx;
+          passTurn = 2;
+          updatePlayerStatuses();
+          document.getElementById('pass-active-player').textContent = partnerName;
+          showToast(`${myName}-er answer locked! Ekhon phone ${partnerName}-ke dao 📱`, 'info');
+        } else if (passTurn === 2 && partnerChoice === null) {
+          partnerChoice = idx;
+          document.getElementById('pass-turn-banner').classList.add('hidden');
+          updatePlayerStatuses();
+          checkReveal();
+        }
+        return;
+      }
 
-            <div class="flex items-center gap-2">
-              ${isOnline ? `
-                <button onclick="handleCopyInviteLink()" class="px-2.5 py-1.5 rounded-full glass-subtle text-[11px] font-bold text-amber-300 border-amber-400/25">
-                  Room: ${escapeHtml(state.roomCode)} 📋
-                </button>
-              ` : ''}
-              <span class="text-xs font-bold text-rose-200/90 bg-white/5 px-3 py-1.5 rounded-full">
-                Question ${qIdx + 1} of ${QUESTIONS.length}
-              </span>
-            </div>
-          </div>
-
-          <!-- Progress Bar -->
-          <div class="w-full h-2 rounded-full bg-white/10 overflow-hidden">
-            <div class="h-full rounded-full bg-gradient-to-r from-rose-500 via-pink-500 to-amber-400 transition-all duration-500" style="width: ${progressPct}%"></div>
-          </div>
-        </div>
-      `;
+      // Live Mode
+      myChoice = idx;
+      document.querySelectorAll('#options-list button').forEach((b, i) => {
+        b.classList.toggle('option-selected', i === idx);
+      });
+      updatePlayerStatuses();
+      publishMsg({ type: 'ANSWER', choice: idx });
+      checkReveal();
     }
 
-    function renderSummaryScreen() {
-      const isOnline = state.mode === 'online';
-      const p1Name = isOnline ? state.roomData.player1Name : state.localP1Name;
-      const p2Name = isOnline ? (state.roomData.player2Name || 'Partner') : state.localP2Name;
-      const answers = isOnline ? (state.roomData.answers || {}) : (state.localGame.answers || {});
+    function checkReveal() {
+      if (myChoice === null || partnerChoice === null) return;
 
-      let totalAnswered = 0;
-      let totalMatches = 0;
+      const item = QUESTIONS[currentQ];
+      const isMatch = myChoice === partnerChoice;
+      if (isMatch) {
+        matchCount++;
+        document.getElementById('match-count').textContent = matchCount;
+        spawnFloatingEmoji('💖');
+      }
 
-      const levelStats = LEVELS.map(lvl => ({
-        ...lvl,
-        matched: 0,
-        total: 5
-      }));
+      const banner = document.getElementById('match-banner');
+      if (isMatch) {
+        banner.className = 'p-3 rounded-2xl text-center text-sm font-semibold bg-emerald-500/20 border border-emerald-500/35 text-emerald-200';
+        banner.textContent = '🔥 Exact Match! Duijoner mon ekdom mile geche!';
+      } else {
+        banner.className = 'p-3 rounded-2xl text-center text-sm font-semibold bg-pink-500/15 border border-pink-500/30 text-pink-200';
+        banner.textContent = '👀 Interesting! Dekho ke ki choose koreche:';
+      }
 
-      QUESTIONS.forEach((q, idx) => {
-        const a = answers[`q${idx}`];
-        if (a && a.player1 && a.player2) {
-          totalAnswered++;
-          if (a.player1 === a.player2) {
-            totalMatches++;
-            levelStats[q.level - 1].matched++;
-          }
+      document.getElementById('rev-p1-name').textContent = `${myName}:`;
+      document.getElementById('rev-p1-ans').textContent = item.opts[myChoice];
+      document.getElementById('rev-p2-name').textContent = `${partnerName || 'Partner'}:`;
+      document.getElementById('rev-p2-ans').textContent = item.opts[partnerChoice];
+
+      // Highlight both options
+      document.querySelectorAll('#options-list button').forEach((b, i) => {
+        b.disabled = true;
+        if (i === myChoice || i === partnerChoice) {
+          b.classList.add('option-selected');
         }
       });
 
-      const matchPct = totalAnswered > 0 ? Math.round((totalMatches / totalAnswered) * 100) : 0;
-
-      let compatTitle = "Sweet & Curious Duo ✨";
-      let compatDesc = "Tomader moddhe onek notun kichu discover korar baki ache—perfect excuse for a long date night!";
-      if (matchPct >= 80) {
-        compatTitle = "Unstoppable Soulmate Flames ❤️‍🔥";
-        compatDesc = "Tomader chemistry ar desire ekdom same wavelength-e! Sparks flying everywhere 🔥";
-      } else if (matchPct >= 60) {
-        compatTitle = "Passionate & Spicy Lovers 🌶️";
-        compatDesc = "Darun chemistry! Bhalo balance ache romance ar wildness-er moddhe.";
-      } else if (matchPct >= 40) {
-        compatTitle = "Flirty & Intriguing Opposites 😈";
-        compatDesc = "Different choices mane aro beshi teasing ar surprise! Ekjon arekjonke notun kore chinbe.";
-      }
-
-      const filteredQuestions = QUESTIONS.map((q, idx) => {
-        const a = answers[`q${idx}`] || {};
-        const matched = Boolean(a.player1 && a.player2 && a.player1 === a.player2);
-        return { ...q, idx, p1: a.player1 || '-', p2: a.player2 || '-', matched };
-      }).filter(item => {
-        if (state.summaryFilter === 'match') return item.matched;
-        if (state.summaryFilter === 'twist') return !item.matched;
-        return true;
-      });
-
-      return `
-        <div class="flex-1 flex flex-col gap-4 pb-6 animate-pop-in">
-          <!-- Header -->
-          <div class="flex items-center justify-between">
-            <button onclick="goHome()" class="px-3 py-2 rounded-xl glass-subtle text-xs font-semibold text-rose-200/80 hover:text-white">
-              🏠 Home
-            </button>
-            <span class="text-xs font-bold uppercase tracking-widest text-amber-300">Final Report</span>
-            <button onclick="${isOnline ? 'resetOnlineRoom()' : 'startLocalMode()'}" class="px-3 py-2 rounded-xl glass-subtle text-xs font-semibold text-rose-300 hover:text-white">
-              ↻ Replay
-            </button>
-          </div>
-
-          <!-- Hero Compatibility Card -->
-          <div class="glass-card rounded-3xl p-6 text-center relative overflow-hidden">
-            <div class="absolute inset-0 bg-gradient-to-br from-rose-500/15 via-transparent to-amber-500/15 pointer-events-none"></div>
-            <div class="text-xs font-bold uppercase tracking-widest text-rose-300 mb-2">
-              ${escapeHtml(p1Name)} ❤️ ${escapeHtml(p2Name)}
-            </div>
-
-            <!-- Score Circle -->
-            <div class="w-28 h-28 mx-auto rounded-full bg-gradient-to-tr from-rose-500 to-amber-400 p-1 shadow-[0_0_35px_rgba(244,63,94,0.4)] mb-3">
-              <div class="w-full h-full rounded-full bg-[#140d1c] flex flex-col items-center justify-center">
-                <span class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-rose-300 to-amber-300">
-                  ${matchPct}%
-                </span>
-                <span class="text-[10px] font-semibold uppercase tracking-wider text-rose-200/60">Match Score</span>
-              </div>
-            </div>
-
-            <h2 class="font-serif text-2xl font-bold text-white mb-1.5">${compatTitle}</h2>
-            <p class="text-xs text-rose-200/80 leading-relaxed max-w-xs mx-auto mb-4">${compatDesc}</p>
-
-            <div class="inline-flex items-center gap-3 px-4 py-2 rounded-2xl bg-black/40 border border-white/10 text-xs">
-              <span>❤️‍🔥 <strong>${totalMatches}</strong> Matches</span>
-              <span class="text-white/20">|</span>
-              <span>👀 <strong>${Math.max(0, totalAnswered - totalMatches)}</strong> Twists</span>
-            </div>
-          </div>
-
-          <!-- Level-by-Level Breakdown -->
-          <div class="glass-card rounded-3xl p-5">
-            <h3 class="text-xs font-bold uppercase tracking-wider text-rose-200/75 mb-3.5">Level-by-Level Compatibility</h3>
-            <div class="space-y-3">
-              ${levelStats.map(lvl => {
-                const pct = Math.round((lvl.matched / lvl.total) * 100);
-                return `
-                  <div>
-                    <div class="flex items-center justify-between text-xs mb-1">
-                      <span class="font-semibold text-white">${lvl.icon} L${lvl.level}: ${escapeHtml(lvl.title.split('(')[0].trim())}</span>
-                      <span class="font-bold text-amber-300">${lvl.matched}/5 (${pct}%)</span>
-                    </div>
-                    <div class="w-full h-2 rounded-full bg-white/10 overflow-hidden">
-                      <div class="h-full rounded-full bg-gradient-to-r from-rose-500 to-amber-400" style="width: ${pct}%"></div>
-                    </div>
-                  </div>
-                `;
-              }).join('')}
-            </div>
-          </div>
-
-          <!-- Full 40 Questions Review -->
-          <div class="glass-card rounded-3xl p-5">
-            <div class="flex items-center justify-between gap-2 mb-4">
-              <h3 class="text-xs font-bold uppercase tracking-wider text-rose-200/75">All Answers Review</h3>
-              <div class="flex gap-1 bg-black/40 p-1 rounded-xl">
-                <button onclick="setSummaryFilter('all')" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold ${state.summaryFilter === 'all' ? 'bg-rose-500 text-white' : 'text-rose-200/60'}">All</button>
-                <button onclick="setSummaryFilter('match')" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold ${state.summaryFilter === 'match' ? 'bg-amber-500 text-slate-950' : 'text-rose-200/60'}">Matches</button>
-                <button onclick="setSummaryFilter('twist')" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold ${state.summaryFilter === 'twist' ? 'bg-rose-500/60 text-white' : 'text-rose-200/60'}">Twists</button>
-              </div>
-            </div>
-
-            <div class="space-y-3 max-h-[420px] overflow-y-auto pr-1">
-              ${filteredQuestions.map(item => `
-                <div class="p-3.5 rounded-2xl bg-white/[0.03] border ${item.matched ? 'border-amber-400/30' : 'border-white/10'}">
-                  <div class="flex items-center justify-between text-[11px] mb-1">
-                    <span class="font-bold text-rose-300">Q${item.id} • Level ${item.level}</span>
-                    <span class="font-bold ${item.matched ? 'text-amber-300' : 'text-rose-200/60'}">
-                      ${item.matched ? '❤️‍🔥 Match' : '👀 Twist'}
-                    </span>
-                  </div>
-                  <p class="text-xs font-semibold text-white mb-2.5">${escapeHtml(item.q)}</p>
-                  <div class="space-y-1.5 text-[11px]">
-                    <div class="flex items-start gap-2 text-rose-200">
-                      <span class="font-bold shrink-0 text-rose-400">${escapeHtml(p1Name)}:</span>
-                      <span>${item.p1 !== '-' ? `<strong>${item.p1})</strong> ${escapeHtml(item.options[item.p1])}` : 'Not answered'}</span>
-                    </div>
-                    <div class="flex items-start gap-2 text-amber-200">
-                      <span class="font-bold shrink-0 text-amber-400">${escapeHtml(p2Name)}:</span>
-                      <span>${item.p2 !== '-' ? `<strong>${item.p2})</strong> ${escapeHtml(item.options[item.p2])}` : 'Not answered'}</span>
-                    </div>
-                  </div>
-                </div>
-              `).join('')}
-            </div>
-          </div>
-        </div>
-      `;
+      const nextBtn = document.getElementById('btn-next-q');
+      nextBtn.textContent = (currentQ + 1 >= QUESTIONS.length) ? 'See Final Chemistry Score ✨' : 'Next Question →';
+      document.getElementById('reveal-box').classList.remove('hidden');
     }
 
-    // ==========================================
-    // 9. MAIN RENDER LOOP & BOOTSTRAP
-    // ==========================================
-    function render() {
-      const root = document.getElementById('app-root');
-      if (!root) return;
-
-      if (state.screen === 'home') {
-        root.innerHTML = renderHomeScreen();
-      } else if (state.screen === 'lobby') {
-        root.innerHTML = renderLobbyScreen();
-      } else if (state.screen === 'game') {
-        root.innerHTML = renderGameScreen();
-      } else if (state.screen === 'summary') {
-        root.innerHTML = renderSummaryScreen();
+    function nextQuestion() {
+      currentQ++;
+      if (mode !== 'pass') {
+        publishMsg({ type: 'NEXT_Q', qIndex: currentQ });
+      }
+      if (currentQ >= QUESTIONS.length) {
+        showSummary();
+      } else {
+        renderQuestion();
       }
     }
 
-    // Initialize on load
+    function sendReaction(emoji) {
+      spawnFloatingEmoji(emoji);
+      publishMsg({ type: 'REACTION', emoji: emoji });
+    }
+
+    function showSummary() {
+      showView('view-summary');
+      document.getElementById('final-score').textContent = `${matchCount} / ${QUESTIONS.length}`;
+      const vibe = document.getElementById('final-vibe');
+      if (matchCount >= 28) {
+        vibe.textContent = "Soulmate level chemistry! Tomra duijon ekjon arekjonke chokh bondho koreo bujhte paro 🔥💖";
+      } else if (matchCount >= 16) {
+        vibe.textContent = "Awesome balance! Kichu mil ar kichu notun secret—ei chemistry-tai relationship-ke exciting rakhe ✨";
+      } else {
+        vibe.textContent = "Opposites attract! Ajke onek notun secret jana holo—ebar real-life date-e baki kotha hobe 😉🌶️";
+      }
+    }
+
+    function restartQuiz() {
+      currentQ = 0;
+      matchCount = 0;
+      if (mode !== 'pass') {
+        publishMsg({ type: 'NEXT_Q', qIndex: 0 });
+      }
+      enterGameArena();
+    }
+
+    // ==================== AUTO-INIT & URL ?room=XXXX SUPPORT ====================
     window.addEventListener('DOMContentLoaded', () => {
-      render();
-      initFirebase();
+      connectFastestBroker().catch(() => {});
+
+      const params = new URLSearchParams(window.location.search);
+      const roomParam = params.get('room');
+      if (roomParam) {
+        switchTab('join');
+        document.getElementById('join-code').value = roomParam.trim().toUpperCase();
+        showToast(`Room ${roomParam} ready! Tomar nickname likhe Join dao 💖`, 'info');
+      }
     });
   </script>
 </body>
